@@ -1,0 +1,83 @@
+import pendulum
+import pytest
+from freezegun import freeze_time
+from pendulum.parser import parse as _parse
+
+from timetracker import parser
+
+# tz_offset = pendulum.now().offset_hours
+
+
+def parse(date_string):
+    """Parse a date string using pendulum but adding the local timezone."""
+    return _parse(date_string, tz="local")
+
+
+COMPONENT_TYPE_EXAMPLES = [
+    pytest.param("9:00", parser.ComponentType.TIME, id="time"),
+    pytest.param("24:00", parser.ComponentType.TIME, id="24h time"),
+    pytest.param("09:00", parser.ComponentType.TIME, id="time with leading zero"),
+    pytest.param("9:00:00", parser.ComponentType.TIME, id="time with seconds"),
+    pytest.param("-1m", parser.ComponentType.DELTA, id="-delta minutes"),
+    pytest.param("+1m", parser.ComponentType.DELTA, id="+delta minutes"),
+    pytest.param("-1h", parser.ComponentType.DELTA, id="-delta hours"),
+    pytest.param("+1h", parser.ComponentType.DELTA, id="+delta hours"),
+    pytest.param("-1d", parser.ComponentType.DELTA, id="-delta days"),
+    pytest.param("+1d", parser.ComponentType.DELTA, id="+delta days"),
+    pytest.param("-1h15m", parser.ComponentType.DELTA, id="-delta hours and minutes"),
+    pytest.param(
+        "-1d@9:00", parser.ComponentType.DELTA_WITH_TIME, id="-delta days with time"
+    ),
+    pytest.param("12", parser.ComponentType.DATE, id="date day only"),
+    pytest.param("04-12", parser.ComponentType.DATE, id="date with month and day"),
+    pytest.param(
+        "2022-04-12", parser.ComponentType.DATE, id="date with year, month and day"
+    ),
+]
+
+
+@pytest.mark.parametrize("component, expected", COMPONENT_TYPE_EXAMPLES)
+def test_component_type(component, expected):
+    assert parser.get_component_type(component) == expected
+
+
+"""
+| Example         | Description                               |
+| --------------- | ----------------------------------------- |
+|                 | now                                       |
+| 9:00            | 9:00 today                                |
+| -1m             | 1 minute ago                              |
+| -1h             | 1 hour ago                                |
+| -1d             | 1 day ago, you will be asked for the time |
+| -1d@9:00        | 1 day ago 9:00                            |
+| +1m             | 1 minute from now                         |
+| +1h             | 1 hour from now                           |
+| 12 7:00         | 7:00 on the 12th of the current month     |
+| 02-28 9:00      | 9:00 on February 28 of the current year   |
+| 2022-02-28 9:00 | 9:00 on February 28, 2022                 |
+"""
+
+SINGLE_TIME_EXAMPLES = [
+    pytest.param([], parse("1985-05-25 15:34:00"), id="now"),
+    pytest.param(["9:00"], parse("1985-05-25 09:00:00"), id="9:00"),
+    pytest.param(["-1m"], parse("1985-05-25 15:33:00"), id="-1m"),
+    pytest.param(["-1h"], parse("1985-05-25 14:34:00"), id="-1h"),
+    pytest.param(["-1d"], parse("1985-05-24 15:34:00"), id="-1d"),
+    pytest.param(["-1d@9:00"], parse("1985-05-24 09:00:00"), id="-1d@9:00"),
+    pytest.param(["+1m"], parse("1985-05-25 15:35:00"), id="+1m"),
+    pytest.param(["+1h"], parse("1985-05-25 16:34:00"), id="+1h"),
+    pytest.param(["12", "7:00"], parse("1985-05-12 07:00:00"), id="12 7:00"),
+    pytest.param(["02-28", "9:00"], parse("1985-02-28 09:00:00"), id="02-28 9:00"),
+    pytest.param(
+        ["2022-02-28", "9:00"], parse("2022-02-28 09:00:00"), id="2022-02-28 9:00"
+    ),
+]
+
+
+@pytest.mark.parametrize("components, expected", SINGLE_TIME_EXAMPLES)
+@freeze_time(
+    "1985-05-25 15:34:12",
+    tz_offset=-_parse("1985-05-25 15:34:12", tz="local").offset_hours,
+)
+def test_single_time_parse(components, expected):
+    assert parser.single_time_parse(components) == expected
