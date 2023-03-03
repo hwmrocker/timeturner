@@ -1,6 +1,8 @@
 import re
+
+# from pendulum.tz.timezone import Timezone
 from enum import Enum
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 import pendulum
 from pendulum.datetime import DateTime
@@ -28,8 +30,14 @@ class TimeDict(TypedDict, total=False):
     second: int
 
 
-class DateTimeDict(DateDict, TimeDict):
-    pass
+class DateTimeDict(TypedDict, total=False):
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int
+    second: int
+    tzinfo: Any
 
 
 def get_component_type(component: str) -> ComponentType:
@@ -44,7 +52,7 @@ def get_component_type(component: str) -> ComponentType:
     return ComponentType.DATE
 
 
-def parse_time(time: str) -> TimeDict:
+def parse_time(time: str) -> DateTimeDict:
     ret = TimeDict()
     match time.split(":"):
         case [hour, minute]:
@@ -54,10 +62,10 @@ def parse_time(time: str) -> TimeDict:
             ret["hour"] = int(hour)
             ret["minute"] = int(minute)
             ret["second"] = int(second)
-    return ret
+    return cast(DateTimeDict, ret)
 
 
-def parse_date(date: str) -> DateDict:
+def parse_date(date: str) -> DateTimeDict:
     ret = DateDict()
     match date.split("-"):
         case [year, month, day]:
@@ -69,7 +77,7 @@ def parse_date(date: str) -> DateDict:
             ret["day"] = int(day)
         case [day]:
             ret["day"] = int(day)
-    return ret
+    return cast(DateTimeDict, ret)
 
 
 def parse_delta(delta: str, now: DateTime) -> DateTimeDict:
@@ -93,15 +101,15 @@ def parse_delta(delta: str, now: DateTime) -> DateTimeDict:
 def parse_delta_with_time(delta_with_time: str, now: DateTime) -> DateTimeDict:
     ret = DateTimeDict()
     delta, time = delta_with_time.split("@")
-    ret.update(**parse_delta(delta, now))
-    ret.update(**parse_time(time))
+    ret.update(parse_delta(delta, now))
+    ret.update(cast(DateTimeDict, parse_time(time)))
     return ret
 
 
 def single_time_parse(components: list[str]) -> DateTime:
     now = pendulum.now()
 
-    default_date_time_components = dict(
+    default_date_time_components = DateTimeDict(
         year=now.year,
         month=now.month,
         day=now.day,
@@ -117,18 +125,18 @@ def single_time_parse(components: list[str]) -> DateTime:
     print(components_with_types)
     match components_with_types:
         case [(time, ComponentType.TIME)]:
-            default_date_time_components.update(**parse_time(time))
+            default_date_time_components.update(parse_time(time))
         case [(date, ComponentType.DATE)]:
-            default_date_time_components.update(**parse_date(date))
+            default_date_time_components.update(parse_date(date))
         case [(delta, ComponentType.DELTA)]:
-            default_date_time_components.update(**parse_delta(delta, now))
+            default_date_time_components.update(parse_delta(delta, now))
         case [(delta_with_time, ComponentType.DELTA_WITH_TIME)]:
             default_date_time_components.update(
-                **parse_delta_with_time(delta_with_time, now)
+                parse_delta_with_time(delta_with_time, now)
             )
         case [(date, ComponentType.DATE), (time, ComponentType.TIME)]:
-            default_date_time_components.update(**parse_date(date))
-            default_date_time_components.update(**parse_time(time))
+            default_date_time_components.update(parse_date(date))
+            default_date_time_components.update(parse_time(time))
         case []:
             pass
         case _:
