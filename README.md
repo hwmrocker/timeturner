@@ -1,7 +1,11 @@
-Minimalistic Time Tracker
-=========================
+Time Turner
+===========
+
+## A Minimalistic Time Tracker.
 
 This is a minimalistic time tracker that allows you to record when you start working, even if it is in the past, stop running activities now, and add activities from the past. It also ensures legal rest periods are included if you forgot to track them.
+
+In the Harry Potter series, the Time-Turner is a magical device that allows the user to travel back in time. Time Turner is a time tracker that lets you "turn back time" and record activities from the past.
 
 ## Usage
 

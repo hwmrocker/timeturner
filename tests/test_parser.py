@@ -77,7 +77,7 @@ SINGLE_TIME_EXAMPLES = [
 @pytest.mark.parametrize("components, expected", SINGLE_TIME_EXAMPLES)
 @freeze_time(
     "1985-05-25 15:34:12",
-    tz_offset=-_parse("1985-05-25 15:34:12", tz="local").offset_hours,
+    tz_offset=-int(_parse("1985-05-25 15:34:12", tz="local").offset_hours),
 )
 def test_single_time_parse(components, expected):
     assert parser.single_time_parse(components) == expected
