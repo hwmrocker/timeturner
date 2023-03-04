@@ -224,3 +224,29 @@ def test_get_slots_between(db, start, end, expected):
 
     rows = db.get_slots_between(start, end)
     assert [row.pk for row in rows] == expected
+
+
+def test_get_all_slots(db):
+    db.add_slot(
+        start=DateTime(1985, 5, 24, 7, 0, 0),
+        end=DateTime(1985, 5, 24, 12, 0, 0),
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 24, 13, 0, 0),
+        end=DateTime(1985, 5, 24, 17, 0, 0),
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 25, 9, 0, 0),
+        end=DateTime(1985, 5, 25, 17, 0, 0),
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 25, 23, 0, 0),
+        end=DateTime(1985, 5, 26, 4, 0, 0),
+        passive=True,
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 26, 9, 0, 0),
+    )
+
+    rows = db.get_all_slots()
+    assert len(rows) == 5

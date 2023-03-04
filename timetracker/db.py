@@ -221,3 +221,25 @@ class DatabaseConnection:
             )
             for pk, start, end, passive, tags, description in rows
         ]
+
+    def get_all_slots(self) -> list[PensiveRow]:
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            f"""
+            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            """
+        )
+
+        rows = cursor.fetchall()
+        return [
+            PensiveRow(
+                pk=pk,
+                start=start,
+                end=end,
+                passive=passive,
+                tags=tags,
+                description=description,
+            )
+            for pk, start, end, passive, tags, description in rows
+        ]
