@@ -156,3 +156,12 @@ def test_update_slot(db, initial_slot, updated_slot, expected):
     )
     row = db.get_latest_slot()
     assert row == expected
+
+
+def test_delete_slot(db):
+    pk = db.add_slot(DateTime(1985, 5, 25, 0, 0, 0))
+    rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
+    assert len(rows) == 1
+    db.delete_slot(pk)
+    rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
+    assert len(rows) == 0

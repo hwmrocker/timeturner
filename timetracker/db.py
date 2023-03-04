@@ -178,3 +178,13 @@ class DatabaseConnection:
             tags=tags,
             description=description,
         )
+
+    def delete_slot(self, pk: int) -> None:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            f"""
+            DELETE FROM {self.table_name} WHERE pk = ?
+            """,
+            (pk,),
+        )
+        self.connection.commit()
