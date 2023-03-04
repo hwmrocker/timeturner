@@ -2,7 +2,7 @@ import re
 
 # from pendulum.tz.timezone import Timezone
 from enum import Enum
-from typing import Any, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast, overload
 
 import pendulum
 from pendulum.datetime import DateTime
@@ -38,6 +38,14 @@ class DateTimeDict(TypedDict, total=False):
     minute: int
     second: int
     tzinfo: Any
+
+
+def split_array(array: list[str], separator: str) -> tuple[list[str], list[str]]:
+    try:
+        index = array.index(separator)
+    except ValueError:
+        return array, []
+    return array[:index], array[index + 1 :]
 
 
 def get_component_type(component: str) -> ComponentType:
@@ -106,8 +114,13 @@ def parse_delta_with_time(delta_with_time: str, now: DateTime) -> DateTimeDict:
     return ret
 
 
-def single_time_parse(components: list[str]) -> DateTime:
-    now = pendulum.now()
+def single_time_parse(
+    components: list[str],
+    *,
+    now: DateTime | None = None,
+) -> DateTime:
+    if now is None:
+        now = pendulum.now()
 
     default_date_time_components = DateTimeDict(
         year=now.year,
@@ -122,7 +135,7 @@ def single_time_parse(components: list[str]) -> DateTime:
     components_with_types = [
         (component, get_component_type(component)) for component in components
     ]
-    print(components_with_types)
+    # print(components_with_types)
     match components_with_types:
         case [(time, ComponentType.TIME)]:
             default_date_time_components.update(parse_time(time))
@@ -142,3 +155,48 @@ def single_time_parse(components: list[str]) -> DateTime:
         case _:
             raise ValueError(f"Invalid components: {components}")
     return DateTime(**default_date_time_components)
+
+
+@overload
+def parse_args(
+    args: list[str],
+    *,
+    prefer_full_days: Literal[True],
+) -> tuple[DateTime, DateTime]:
+    ...
+
+
+@overload
+def parse_args(
+    args: list[str],
+    *,
+    prefer_full_days: Literal[False],
+) -> tuple[DateTime, DateTime | None]:
+    ...
+
+
+@overload
+def parse_args(
+    args: list[str],
+) -> tuple[DateTime, DateTime | None]:
+    ...
+
+
+def parse_args(
+    args: list[str],
+    *,
+    prefer_full_days: bool = False,
+) -> tuple[DateTime, DateTime | None]:
+
+    start, end = split_array(args, "-")
+    start = single_time_parse(start)
+    if end:
+        end = single_time_parse(end, now=start)
+    else:
+        end = None
+
+    if prefer_full_days:
+        start = start.start_of("day")
+        if not end:
+            end = start.end_of("day")
+    return start, end

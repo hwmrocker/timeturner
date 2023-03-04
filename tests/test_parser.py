@@ -81,3 +81,35 @@ SINGLE_TIME_EXAMPLES = [
 )
 def test_single_time_parse(components, expected):
     assert parser.single_time_parse(components) == expected
+
+
+PARSE_ARGS_EXAMPLES = [
+    pytest.param([], False, (parse("1985-05-25 15:34:00"), None), id="no args"),
+    pytest.param(
+        [],
+        True,
+        (parse("1985-05-25 00:00:00"), parse("1985-05-25 00:00:00").end_of("day")),
+        id="no args, prefer full days",
+    ),
+    pytest.param(
+        ["23", "07:00", "-", "19:00"],
+        False,
+        (parse("1985-05-23 07:00:00"), parse("1985-05-23 19:00:00")),
+        id="two days in the past",
+    ),
+    pytest.param(
+        ["23", "07:00", "-", "+4h"],
+        False,
+        (parse("1985-05-23 07:00:00"), parse("1985-05-23 11:00:00")),
+        id="two days in the past, with delta",
+    ),
+]
+
+
+@pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ARGS_EXAMPLES)
+@freeze_time(
+    "1985-05-25 15:34:12",
+    tz_offset=-int(_parse("1985-05-25 15:34:12", tz="local").offset_hours),
+)
+def test_parse_args(args, prefer_full_days, expected):
+    assert parser.parse_args(args, prefer_full_days=prefer_full_days) == expected
