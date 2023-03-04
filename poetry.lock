@@ -656,6 +656,20 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
+name = "pytest-dependency"
+version = "0.5.1"
+description = "Manage dependencies of tests"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-dependency-0.5.1.tar.gz", hash = "sha256:c2a892906192663f85030a6ab91304e508e546cddfe557d692d61ec57a1d946b"},
+]
+
+[package.dependencies]
+pytest = ">=3.6.0"
+
+[[package]]
 name = "pytest-watch"
 version = "4.2.0"
 description = "Local continuous test runner with pytest and watchdog."
@@ -929,4 +943,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a68c0df88b1a529ad39332edc954ce9de3be73105ec93319465926ae26911c5e"
+content-hash = "4252fbe03f17186d5025db292697818eef414f0df59a6924fe179aef3d56e100"
