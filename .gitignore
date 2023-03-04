@@ -1,0 +1,6 @@
+.tox
+.pytest_cache
+.coverage
+*.db
+__pycache__
+*.pyc
