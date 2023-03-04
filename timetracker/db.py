@@ -188,3 +188,36 @@ class DatabaseConnection:
             (pk,),
         )
         self.connection.commit()
+
+    def get_slots_between(
+        self,
+        start: DateTime,
+        end: DateTime,
+    ) -> list[PensiveRow]:
+        """
+        Get all time slots between the given start and end times.
+
+        This includes slots that start before the given start time and / or end after the given end time.
+        """
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            f"""
+            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            WHERE start <= ? AND (end >= ? OR end IS NULL)
+            """,
+            (str(end), str(start)),
+        )
+
+        rows = cursor.fetchall()
+        return [
+            PensiveRow(
+                pk=pk,
+                start=start,
+                end=end,
+                passive=passive,
+                tags=tags,
+                description=description,
+            )
+            for pk, start, end, passive, tags, description in rows
+        ]

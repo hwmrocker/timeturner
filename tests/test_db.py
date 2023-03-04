@@ -165,3 +165,62 @@ def test_delete_slot(db):
     db.delete_slot(pk)
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 0
+
+
+GET_SLOTS_BETWEEN_TEST_CASES = [
+    pytest.param(
+        DateTime(1985, 5, 24, 0, 0, 0),
+        DateTime(1985, 5, 24, 23, 59, 59),
+        [1, 2],
+        id="2 on the same day",
+    ),
+    pytest.param(
+        DateTime(1985, 5, 25, 0, 0, 0),
+        DateTime(1985, 5, 25, 23, 59, 59),
+        [3, 4],
+        id="one event ends the next day",
+    ),
+    pytest.param(
+        DateTime(1985, 5, 26, 0, 0, 0),
+        DateTime(1985, 5, 26, 23, 59, 59),
+        [4, 5],
+        id="one event starts the previous day, the other has no end",
+    ),
+    pytest.param(
+        DateTime(1985, 5, 27, 0, 0, 0),
+        DateTime(1985, 5, 27, 23, 59, 59),
+        [5],
+        id="one event starts the previous day, the other has no end",
+    ),
+]
+
+
+@pytest.mark.parametrize("start, end, expected", GET_SLOTS_BETWEEN_TEST_CASES)
+@pytest.mark.dependency(depends=["add_slot"])
+def test_get_slots_between(db, start, end, expected):
+    # 2 slots on the same day
+    db.add_slot(
+        start=DateTime(1985, 5, 24, 7, 0, 0),
+        end=DateTime(1985, 5, 24, 12, 0, 0),
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 24, 13, 0, 0),
+        end=DateTime(1985, 5, 24, 17, 0, 0),
+    )
+    # 1 slot on the next day
+    db.add_slot(
+        start=DateTime(1985, 5, 25, 9, 0, 0),
+        end=DateTime(1985, 5, 25, 17, 0, 0),
+    )
+    # 1 passive slot ending on the next day
+    db.add_slot(
+        start=DateTime(1985, 5, 25, 23, 0, 0),
+        end=DateTime(1985, 5, 26, 4, 0, 0),
+        passive=True,
+    )
+    db.add_slot(
+        start=DateTime(1985, 5, 26, 9, 0, 0),
+    )
+
+    rows = db.get_slots_between(start, end)
+    assert [row.pk for row in rows] == expected
