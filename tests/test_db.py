@@ -50,11 +50,20 @@ def _get_all_combinations_of_slots():
     ]
     for i in range(len(possible_elements)):
         for combination in combinations(possible_elements, i + 1):
-            yield dict(combination)
+            yield (dict(combination), dict(combination))
 
 
-@pytest.mark.parametrize("elements", _get_all_combinations_of_slots())
-def test_add_slot_and_get_latest(db, elements):
+GET_LATEST_TEST_CASES = [
+    *_get_all_combinations_of_slots(),
+    pytest.param(dict(passive=True), dict(passive=True), id="passive True"),
+    pytest.param(dict(passive=False), dict(passive=False), id="passive False"),
+    pytest.param(dict(passive=None), dict(passive=False), id="passive None"),
+]
+
+
+@pytest.mark.dependency(name="get_latest", depends=["add_slot"])
+@pytest.mark.parametrize("elements, expected_row", GET_LATEST_TEST_CASES)
+def test_add_slot_and_get_latest(db, elements, expected_row):
     db.add_slot(
         DateTime(1985, 5, 25, 0, 0, 0),
         **elements,
@@ -62,10 +71,10 @@ def test_add_slot_and_get_latest(db, elements):
     expected = PensiveRow(
         pk=1,
         start=DateTime(1985, 5, 25, 0, 0, 0),
-        end=elements.get("end"),
-        passive=elements.get("passive", False),
-        tags=elements.get("tags"),
-        description=elements.get("description"),
+        end=expected_row.get("end"),
+        passive=expected_row.get("passive", False),
+        tags=expected_row.get("tags"),
+        description=expected_row.get("description"),
     )
     latest_slot = db.get_latest_slot()
     assert latest_slot == expected
@@ -110,10 +119,34 @@ UPDATE_SLOT_TEST_CASES = [
         ),
         id="only change one field",
     ),
+    pytest.param(
+        dict(
+            start=DateTime(1985, 5, 25, 0, 0, 0),
+            end=DateTime(1985, 5, 25, 2, 0, 0),
+            passive=True,
+            tags="tag1",
+            description="description1",
+        ),
+        dict(
+            end=None,
+            passive=None,
+            tags=None,
+            description=None,
+        ),
+        PensiveRow(
+            pk=1,
+            start=DateTime(1985, 5, 25, 0, 0, 0),
+            end=None,
+            passive=False,
+            tags=None,
+            description=None,
+        ),
+        id="delete all optional fields",
+    ),
 ]
 
 
-@pytest.mark.dependency(depends=["add_slot"])
+@pytest.mark.dependency(depends=["get_latest"])
 @pytest.mark.parametrize("initial_slot, updated_slot, expected", UPDATE_SLOT_TEST_CASES)
 def test_update_slot(db, initial_slot, updated_slot, expected):
     pk = db.add_slot(**initial_slot)

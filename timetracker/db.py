@@ -18,15 +18,22 @@ import sqlite3
 from typing import Any
 
 from pendulum.datetime import DateTime
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+
+class Sentinel:
+    ...
+
+
+sentinel = Sentinel()
 
 
 class TimeSlot(BaseModel):
     start: DateTime
-    end: DateTime | None
-    passive: bool
-    tags: str | None
-    description: str | None
+    end: DateTime | None = None
+    passive: bool = False
+    tags: str | None = None
+    description: str | None = None
 
 
 class PensiveRow(TimeSlot):
@@ -67,7 +74,7 @@ class DatabaseConnection:
         self,
         start: DateTime,
         end: DateTime | None = None,
-        passive: bool = False,
+        passive: bool | None = False,
         tags: str | None = None,
         description: str | None = None,
     ) -> int:
@@ -76,6 +83,10 @@ class DatabaseConnection:
 
         Returns the primary key of the newly created time slot.
         """
+        # fix passive if it is None
+        if passive is None:
+            passive = False
+
         query = f"""
             INSERT INTO {self.table_name} (start, end, passive, tags, description)
             VALUES (?, ?, ?, ?, ?)
@@ -100,26 +111,42 @@ class DatabaseConnection:
     def update_slot(
         self,
         pk: int,
-        start: DateTime | None = None,
-        end: DateTime | None = None,
-        passive: bool | None = None,
-        tags: str | None = None,
-        description: str | None = None,
+        start: DateTime | Sentinel = sentinel,
+        end: DateTime | None | Sentinel = sentinel,
+        passive: bool | None | Sentinel = sentinel,
+        tags: str | None | Sentinel = sentinel,
+        description: str | None | Sentinel = sentinel,
     ) -> None:
         """
         Update a time slot in the database.
         """
+        elements_to_update = []
+        values_to_update = []
+        if start is not sentinel:
+            elements_to_update.append("start = ?")
+            values_to_update.append(str(start))
+        if end is not sentinel:
+            elements_to_update.append("end = ?")
+            values_to_update.append(str_if_not_none(end))
+        if passive is not sentinel:
+            elements_to_update.append("passive = ?")
+            if passive is None:
+                passive = False
+            values_to_update.append(passive)
+        if tags is not sentinel:
+            elements_to_update.append("tags = ?")
+            values_to_update.append(tags)
+        if description is not sentinel:
+            elements_to_update.append("description = ?")
+            values_to_update.append(description)
+
         query = f"""
             UPDATE {self.table_name}
-            SET start = ?, end = ?, passive = ?, tags = ?, description = ?
+            SET {', '.join(elements_to_update)}
             WHERE pk = ?
             """
         values = (
-            str_if_not_none(start),
-            str_if_not_none(end),
-            passive,
-            tags,
-            description,
+            *values_to_update,
             pk,
         )
         cursor = self.connection.cursor()
@@ -141,6 +168,8 @@ class DatabaseConnection:
         if row is None:
             return None
         pk, start, end, passive, tags, description = row
+        if passive is None:
+            passive = False
         return PensiveRow(
             pk=pk,
             start=start,
