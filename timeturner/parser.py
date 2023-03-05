@@ -161,6 +161,16 @@ def single_time_parse(
 def parse_args(
     args: list[str],
     *,
+    single_time: Literal[True],
+    prefer_full_days: bool = False,
+) -> DateTime:
+    ...
+
+
+@overload
+def parse_args(
+    args: list[str],
+    *,
     prefer_full_days: Literal[True],
 ) -> tuple[DateTime, DateTime]:
     ...
@@ -186,7 +196,8 @@ def parse_args(
     args: list[str],
     *,
     prefer_full_days: bool = False,
-) -> tuple[DateTime, DateTime | None]:
+    single_time: bool = False,
+) -> tuple[DateTime, DateTime | None] | DateTime:
 
     start, end = split_array(args, "-")
     start = single_time_parse(start)
@@ -194,7 +205,8 @@ def parse_args(
         end = single_time_parse(end, now=start)
     else:
         end = None
-
+    if single_time:
+        return start
     if prefer_full_days:
         start = start.start_of("day")
         if not end:

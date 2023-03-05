@@ -193,6 +193,31 @@ class DatabaseConnection:
         )
         self.connection.commit()
 
+    def get_slot(self, pk: int) -> PensiveRow | None:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            f"""
+            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            WHERE pk = ?
+            """,
+            (pk,),
+        )
+
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        pk, start, end, passive, tags, description = row
+        if passive is None:
+            passive = False
+        return PensiveRow(
+            pk=pk,
+            start=start,
+            end=end,
+            passive=passive,
+            tags=tags,
+            description=description,
+        )
+
     def get_slots_between(
         self,
         start: DateTime,

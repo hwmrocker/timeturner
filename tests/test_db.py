@@ -3,8 +3,7 @@ from itertools import combinations
 
 import pytest
 from pendulum.datetime import DateTime
-
-from timetracker.db import DatabaseConnection, PensiveRow
+from timeturner.db import DatabaseConnection, PensiveRow
 
 
 @pytest.fixture

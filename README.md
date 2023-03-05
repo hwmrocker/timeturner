@@ -100,15 +100,29 @@ If you forget to track a legal rest period, the time tracker will automatically 
 TODOs:
 - [ ] Add Changelog
 - [ ] Add Configuration
-- [ ] Add JSON output
 - [ ] show and generate tui output
 - [ ] Add section about contributions
 - [ ] Add license
 - [ ] Add precommit hook to ensure code is formatted
 - [ ] Add version and git hash to build, so it can be shown in the tui
-- [ ] Build a minimal Docker image (maybe)
 - [ ] Generate docstrings for DB methods
+- [ ] Build a minimal Docker image (maybe)
 
+TODOS by command:
+
+- [ ] add
+  - [ ] auto close activities that are still open
+  - [ ] break up activities when a activity is inserted in the middle
+  - [ ] add tests
+- [ ] stop (maybe rename to end)
+  - [ ] add tests
+
+- [ ] configure
+  - [ ] modify and write configfile
+- [ ] list
+  - [ ] add option to show only open activities
+  - [ ] add shortcut / alias `l`
+  - [ ] add tests
 ### Design Goals
 
 - minimalistic, little to type
@@ -118,3 +132,8 @@ TODOs:
   - TODO: support plugins (maybe a later version)
   - be able to use it programmatically
   - be able to use it as a library
+
+
+### Open Questions
+
+- [ ] should the get_latest_slot return slots from the future (start_time in the future)?

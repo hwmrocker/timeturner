@@ -2,8 +2,7 @@ import pendulum
 import pytest
 from freezegun import freeze_time
 from pendulum.parser import parse as _parse
-
-from timetracker import parser
+from timeturner import parser
 
 # tz_offset = pendulum.now().offset_hours
 

@@ -1,9 +1,10 @@
 [tool.poetry]
-name = "timetracker"
+name = "timeturner"
 version = "0.1.0"
 description = ""
 authors = ["Olaf Gladis <olaf@gladis.org>"]
 readme = "README.md"
+packages = [{ include = "timeturner" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -25,4 +26,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-tt = 'timetracker.run:entrypoint'
+tt = 'timeturner.run:entrypoint'
