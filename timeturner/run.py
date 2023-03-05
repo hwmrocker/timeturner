@@ -16,16 +16,17 @@ console = Console()
 print = console.print
 
 
-@app.command("l")
+@app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
     console.print_json(data=timeturner._list(time), default=pydantic_encoder)
 
 
-@app.command("a")
+@app.command("a", hidden=True)
 @app.command()
 def add(
     time: Optional[list[str]] = typer.Argument(None),
+    auto_stop: Optional[bool] = None,
     # passive: bool | None = False,
     # tags: str | None = None,
     # description: str | None = None,
@@ -33,13 +34,12 @@ def add(
     console.print_json(data=timeturner.add(time), default=pydantic_encoder)
 
 
-@app.command("e")
+@app.command("e", hidden=True)
 @app.command("end")
-@app.command()
-def stop(
+def end(
     time: Optional[list[str]] = typer.Argument(None),
 ):
-    console.print_json(data=timeturner.stop(time), default=pydantic_encoder)
+    console.print_json(data=timeturner.end(time), default=pydantic_encoder)
 
 
 def entrypoint():

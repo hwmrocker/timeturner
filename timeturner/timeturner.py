@@ -1,7 +1,3 @@
-import json
-
-from pydantic.json import pydantic_encoder
-
 from timeturner.db import DatabaseConnection, PensiveRow
 from timeturner.parser import parse_args
 
@@ -26,7 +22,7 @@ def add(time: list[str] | None) -> PensiveRow | None:
     return entry
 
 
-def stop(time: list[str] | None) -> PensiveRow | None:
+def end(time: list[str] | None) -> PensiveRow | None:
     if time is None:
         time = []
     end = parse_args(time, single_time=True)

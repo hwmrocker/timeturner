@@ -18,7 +18,7 @@ import sqlite3
 from typing import Any
 
 from pendulum.datetime import DateTime
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class Sentinel:
