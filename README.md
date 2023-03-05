@@ -106,7 +106,6 @@ TODOs:
 - [ ] Add precommit hook to ensure code is formatted
 - [ ] Add version and git hash to build, so it can be shown in the tui
 - [ ] Generate docstrings for DB methods
-- [ ] Build a minimal Docker image (maybe)
 
 TODOS by command:
 
@@ -141,3 +140,7 @@ TODOS by command:
 ### Open Questions
 
 - [ ] should the get_latest_slot return slots from the future (start_time in the future)?
+
+### Nice to have:
+- [ ] Build a minimal Docker image (maybe)
+- [ ] https://github.com/ines/termynal
