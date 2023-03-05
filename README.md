@@ -89,7 +89,7 @@ tt stop
 
 This will record the activity with a duration of 7 hours and 30 minutes.
 
-### Legal Rest Periods
+### Legal Rest Periods (TODO: should be part of reporting)
 
 If you forget to track a legal rest period, the time tracker will automatically add it when you stop an activity. The legal rest periods are inserted without changing the total duration. For now only the following check is implemented:
 
@@ -97,3 +97,25 @@ If you forget to track a legal rest period, the time tracker will automatically 
 - Warn if you worked more than 10 hours a day.
 
 
+TODOs:
+- [ ] should get_latest_slot return order by start_time?
+- [ ] Add Changelog
+- [ ] Add Configuration
+- [ ] Add JSON output
+- [ ] show and generate tui output
+- [ ] Add section about contributions
+- [ ] Add license
+- [ ] Add precommit hook to ensure code is formatted
+- [ ] Add version and git hash to build, so it can be shown in the tui
+- [ ] Build a minimal Docker image (maybe)
+- [ ] Generate docstrings for DB methods
+
+### Design Goals
+
+- minimalistic, little to type
+- enforce as little as possible
+- be clear
+- be extensible
+  - TODO: support plugins (maybe a later version)
+  - be able to use it programmatically
+  - be able to use it as a library
