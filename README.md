@@ -121,8 +121,12 @@ TODOS by command:
   - [ ] modify and write configfile
 - [ ] list
   - [ ] add option to show only open activities
-  - [ ] add shortcut / alias `l`
   - [ ] add tests
+- [ ] report
+  - [ ] add tests
+- [ ] import
+  - [ ] import from hamster
+  - [ ] write tests
 ### Design Goals
 
 - minimalistic, little to type

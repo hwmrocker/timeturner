@@ -16,11 +16,13 @@ console = Console()
 print = console.print
 
 
+@app.command("l")
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
     console.print_json(data=timeturner._list(time), default=pydantic_encoder)
 
 
+@app.command("a")
 @app.command()
 def add(
     time: Optional[list[str]] = typer.Argument(None),
@@ -31,6 +33,8 @@ def add(
     console.print_json(data=timeturner.add(time), default=pydantic_encoder)
 
 
+@app.command("e")
+@app.command("end")
 @app.command()
 def stop(
     time: Optional[list[str]] = typer.Argument(None),
