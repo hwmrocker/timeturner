@@ -157,10 +157,14 @@ class DatabaseConnection:
         self.connection.commit()
 
     def get_latest_slot(self) -> PensiveRow | None:
+        """
+        get the latest time slot from the database according to the start time.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, tags, description FROM {self.table_name} ORDER BY pk DESC LIMIT 1
+            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            ORDER BY start DESC LIMIT 1
             """
         )
 

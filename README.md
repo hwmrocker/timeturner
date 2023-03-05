@@ -98,7 +98,6 @@ If you forget to track a legal rest period, the time tracker will automatically 
 
 
 TODOs:
-- [ ] should get_latest_slot return order by start_time?
 - [ ] Add Changelog
 - [ ] Add Configuration
 - [ ] Add JSON output

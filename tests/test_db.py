@@ -27,13 +27,41 @@ def test_add_slot_with_end(db):
     assert rows[0] == (1, "1985-05-25T00:00:00", "1985-05-25T01:00:00", 0, None, None)
 
 
-def test_get_latest_slot(db):
-    db.add_slot(DateTime(1985, 5, 25, 0, 0, 0))
-    db.add_slot(DateTime(1985, 5, 25, 1, 0, 0))
+GET_LATEST_TEST_CASES = [
+    pytest.param(
+        [DateTime(1985, 5, 25, 0, 0, 0), DateTime(1985, 5, 25, 1, 0, 0)],
+        2,
+        id="two slots in order",
+    ),
+    pytest.param(
+        [DateTime(1985, 5, 25, 1, 0, 0), DateTime(1985, 5, 25, 0, 0, 0)],
+        1,
+        id="two slots in reverse order",
+    ),
+    pytest.param(
+        [
+            DateTime(1985, 5, 25, 0, 0, 0),
+            DateTime(1985, 5, 25, 2, 0, 0),
+            DateTime(1985, 5, 25, 1, 0, 0),
+        ],
+        2,
+        id="two slots in mixed order",
+    ),
+]
+
+
+@pytest.mark.parametrize("db_entries, latest_pk", GET_LATEST_TEST_CASES)
+@pytest.mark.dependency(name="get_latest", depends=["add_slot"])
+def test_get_latest_slot(db, db_entries, latest_pk):
+    for entry in db_entries:
+        pk = db.add_slot(entry)
+        print(f"Added {entry} with pk {pk}")
     row = db.get_latest_slot()
+    latest_date = sorted(db_entries)[-1]
+    assert row.pk == latest_pk
     assert row == PensiveRow(
-        pk=2,
-        start=DateTime(1985, 5, 25, 1, 0, 0),
+        pk=latest_pk,
+        start=latest_date,
         end=None,
         passive=False,
         tags=None,
