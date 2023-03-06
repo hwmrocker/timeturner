@@ -77,7 +77,7 @@ class DatabaseConnection:
         passive: bool | None = False,
         tags: str | None = None,
         description: str | None = None,
-    ) -> int:
+    ) -> PensiveRow:
         """
         Add a time slot to the database.
 
@@ -106,7 +106,7 @@ class DatabaseConnection:
         self.connection.commit()
         if cursor.lastrowid is None:
             raise Exception("Failed to insert time slot into database")
-        return cursor.lastrowid
+        return self.get_slot(cursor.lastrowid)
 
     def update_slot(
         self,

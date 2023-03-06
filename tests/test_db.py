@@ -3,6 +3,7 @@ from itertools import combinations
 
 import pytest
 from pendulum.datetime import DateTime
+
 from timeturner.db import DatabaseConnection, PensiveRow
 
 
@@ -13,7 +14,7 @@ def db():
 
 @pytest.mark.dependency(name="add_slot")
 def test_add_slot(db):
-    assert db.add_slot(DateTime(1985, 5, 25, 0, 0, 0)) == 1
+    assert db.add_slot(DateTime(1985, 5, 25, 0, 0, 0)).pk == 1
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
     assert rows[0] == (1, "1985-05-25T00:00:00", None, 0, None, None)
@@ -53,7 +54,7 @@ GET_LATEST_TEST_CASES = [
 @pytest.mark.dependency(name="get_latest", depends=["add_slot"])
 def test_get_latest_slot(db, db_entries, latest_pk):
     for entry in db_entries:
-        pk = db.add_slot(entry)
+        pk = db.add_slot(entry).pk
         print(f"Added {entry} with pk {pk}")
     row = db.get_latest_slot()
     latest_date = sorted(db_entries)[-1]
@@ -176,7 +177,7 @@ UPDATE_SLOT_TEST_CASES = [
 @pytest.mark.dependency(depends=["get_latest"])
 @pytest.mark.parametrize("initial_slot, updated_slot, expected", UPDATE_SLOT_TEST_CASES)
 def test_update_slot(db, initial_slot, updated_slot, expected):
-    pk = db.add_slot(**initial_slot)
+    pk = db.add_slot(**initial_slot).pk
     db.update_slot(
         pk,
         **updated_slot,
@@ -186,7 +187,7 @@ def test_update_slot(db, initial_slot, updated_slot, expected):
 
 
 def test_delete_slot(db):
-    pk = db.add_slot(DateTime(1985, 5, 25, 0, 0, 0))
+    pk = db.add_slot(DateTime(1985, 5, 25, 0, 0, 0)).pk
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
     db.delete_slot(pk)

@@ -1,18 +1,18 @@
+from datetime import date
+from pathlib import Path
 from typing import Optional
 
 import typer
 from pydantic.json import pydantic_encoder
 from rich.console import Console
-from rich.traceback import install
 
 from timeturner import timeturner
 from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
-from timeturner.parser import parse_args
+from timeturner.loader import import_text
 
 app = typer.Typer()
 
 console = Console()
-# install(show_locals=True, console=console)
 print = console.print
 
 
@@ -40,6 +40,13 @@ def end(
     time: Optional[list[str]] = typer.Argument(None),
 ):
     console.print_json(data=timeturner.end(time), default=pydantic_encoder)
+
+
+@app.command("i", hidden=True)
+@app.command(name="import")
+def import_(text_file: Path):
+    db = DatabaseConnection()
+    console.print_json(data=import_text(db, text_file), default=pydantic_encoder)
 
 
 def entrypoint():
