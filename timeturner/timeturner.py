@@ -17,9 +17,7 @@ def add(time: list[str] | None) -> PensiveRow | None:
         time = []
     start, end = parse_args(time)
     db = DatabaseConnection()
-    pk = db.add_slot(start, end)
-    entry = db.get_slot(pk)
-    return entry
+    return db.add_slot(start, end)
 
 
 def end(time: list[str] | None) -> PensiveRow | None:

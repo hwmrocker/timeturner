@@ -1,15 +1,18 @@
-import pendulum
+from typing import cast
+
 import pytest
 from freezegun import freeze_time
+from pendulum.datetime import DateTime
 from pendulum.parser import parse as _parse
+
 from timeturner import parser
 
 # tz_offset = pendulum.now().offset_hours
 
 
-def parse(date_string):
+def parse(date_string) -> DateTime:
     """Parse a date string using pendulum but adding the local timezone."""
-    return _parse(date_string, tz="local")
+    return cast(DateTime, _parse(date_string, tz="local"))
 
 
 COMPONENT_TYPE_EXAMPLES = [
@@ -76,7 +79,7 @@ SINGLE_TIME_EXAMPLES = [
 @pytest.mark.parametrize("components, expected", SINGLE_TIME_EXAMPLES)
 @freeze_time(
     "1985-05-25 15:34:12",
-    tz_offset=-int(_parse("1985-05-25 15:34:12", tz="local").offset_hours),
+    tz_offset=-int(parse("1985-05-25 15:34:12").offset_hours),
 )
 def test_single_time_parse(components, expected):
     assert parser.single_time_parse(components) == expected
@@ -108,7 +111,7 @@ PARSE_ARGS_EXAMPLES = [
 @pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ARGS_EXAMPLES)
 @freeze_time(
     "1985-05-25 15:34:12",
-    tz_offset=-int(_parse("1985-05-25 15:34:12", tz="local").offset_hours),
+    tz_offset=-int(parse("1985-05-25 15:34:12").offset_hours),
 )
 def test_parse_args(args, prefer_full_days, expected):
     assert parser.parse_args(args, prefer_full_days=prefer_full_days) == expected

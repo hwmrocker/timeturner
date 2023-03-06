@@ -15,7 +15,7 @@ It has the following columns:
 """
 
 import sqlite3
-from typing import Any
+from typing import Any, cast
 
 from pendulum.datetime import DateTime
 from pydantic import BaseModel
@@ -106,7 +106,7 @@ class DatabaseConnection:
         self.connection.commit()
         if cursor.lastrowid is None:
             raise Exception("Failed to insert time slot into database")
-        return self.get_slot(cursor.lastrowid)
+        return cast(PensiveRow, self.get_slot(cursor.lastrowid))
 
     def update_slot(
         self,
