@@ -1,4 +1,8 @@
+from pathlib import Path
+from typing import Iterator
+
 from timeturner.db import DatabaseConnection, PensiveRow
+from timeturner.loader import import_text
 from timeturner.parser import parse_args
 
 
@@ -35,3 +39,7 @@ def end(time: list[str] | None) -> PensiveRow | None:
     db.update_slot(pk, end=end)
     entry = db.get_slot(pk)
     return entry
+
+
+def import_text(db: DatabaseConnection, path: Path) -> Iterator[PensiveRow]:
+    return import_text(db, path)

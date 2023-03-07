@@ -8,7 +8,6 @@ from rich.console import Console
 
 from timeturner import timeturner
 from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
-from timeturner.loader import import_text
 
 app = typer.Typer()
 
@@ -46,7 +45,9 @@ def end(
 @app.command(name="import")
 def import_(text_file: Path):
     db = DatabaseConnection()
-    console.print_json(data=import_text(db, text_file), default=pydantic_encoder)
+    console.print_json(
+        data=timeturner.import_text(db, text_file), default=pydantic_encoder
+    )
 
 
 def entrypoint():

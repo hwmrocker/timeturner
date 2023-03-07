@@ -106,6 +106,12 @@ TODOs:
 - [ ] Add precommit hook to ensure code is formatted
 - [ ] Add version and git hash to build, so it can be shown in the tui
 - [ ] Generate docstrings for DB methods
+- [ ] Remove import command (it contains assumptions that will not be true for everyone)
+  - [ ] Document how to import data from other time trackers
+  - [ ] Create a helper command that takes python / yaml / whatever file to define how the data should be imported
+- [ ] Add logging
+  - [ ] allow different log levels for database and application
+  - [ ] add a change log
 
 TODOS by command:
 
@@ -123,9 +129,7 @@ TODOS by command:
   - [ ] add tests
 - [ ] report
   - [ ] add tests
-- [ ] import
-  - [ ] import from hamster
-  - [ ] write tests
+
 ### Design Goals
 
 - minimalistic, little to type
