@@ -15,7 +15,7 @@ To start tracking an activity, run the following command:
 
 
 ```
-tt start
+timeturner start
 ```
 
 This will record the current time as the start of your activity.
@@ -27,7 +27,7 @@ This will record the current time as the start of your activity.
 If you forgot to start tracking an activity, you can add it with the following command:
 
 ```
-tt start <start_time>
+timeturner start <start_time>
 ```
 
 ### Stopping an Activity
@@ -35,7 +35,7 @@ tt start <start_time>
 To stop tracking the current activity, run the following command:
 
 ```
-tt stop
+timeturner stop
 ```
 
 This will record the current time as the end of your activity and calculate the total duration.
@@ -45,13 +45,13 @@ This will record the current time as the end of your activity and calculate the 
 If you forgot to track an activity, you can add it with the following command:
 
 ```
-tt add <start_time> <end_time>
+timeturner add <start_time> <end_time>
 ```
 
 Replace <start_time> and <end_time> with the start and end times of your activity in the format YYYY-MM-DD HH:MM:SS. For example:
 
 ```
-tt add 2022-02-28 09:00 2022-02-28 12:00
+timeturner add 2022-02-28 09:00 2022-02-28 12:00
 ```
 
 This will add the activity with the specified start and end times to your records.
@@ -82,9 +82,9 @@ This will add the activity with the specified start and end times to your record
 If you start an activity at 9:00 and work for 7 hours without taking a legal rest period, the time tracker will automatically add a 30-minute rest period when you stop the activity. To record this activity, run the following commands:
 
 ```
-tt start
+timeturner start
 # Work for 7 hours without stopping
-tt stop
+timeturner stop
 ```
 
 This will record the activity with a duration of 7 hours and 30 minutes.
@@ -107,7 +107,8 @@ TODOs:
 - [ ] Generate docstrings for DB methods
 - [ ] Remove import command (it contains assumptions that will not be true for everyone)
   - [ ] Document how to import data from other time trackers
-  - [ ] Create a helper command that takes python / yaml / whatever file to define how the data should be imported
+  - [ ] Add mode to convert hamster output to jsonl file.
+  - [ ] Add mode to import jsonl file
 - [ ] Add logging
   - [ ] allow different log levels for database and application
   - [ ] add a change log
