@@ -44,8 +44,11 @@ class TimeSlot(BaseModel):
         if isinstance(value, DateTime):
             return value
         if isinstance(value, datetime):
-            return parse(str(value))
-        return parse(value)
+            value = str(value)
+        new_value = parse(value)
+        if isinstance(new_value, DateTime):
+            return new_value
+        raise ValueError(f"Could not parse {value} as a datetime")
 
     @validator("end")
     def parse_end(cls, value: str | datetime | DateTime | None) -> DateTime | None:
