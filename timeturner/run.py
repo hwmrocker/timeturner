@@ -6,7 +6,7 @@ import typer
 from pydantic.json import pydantic_encoder
 from rich.console import Console
 
-from timeturner import timeturner
+from timeturner import rich_output, timeturner
 from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
 
 app = typer.Typer()
@@ -14,11 +14,18 @@ app = typer.Typer()
 console = Console()
 print = console.print
 
+config = dict(
+    show_json=False,
+)
+
 
 @app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
-    console.print_json(data=timeturner._list(time), default=pydantic_encoder)
+    if config["show_json"]:
+        console.print_json(data=data, default=pydantic_encoder)
+    else:
+        rich_output.print_pretty_list(timeturner._list(time))
 
 
 @app.command("a", hidden=True)

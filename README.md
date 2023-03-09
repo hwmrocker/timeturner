@@ -124,6 +124,8 @@ TODOS by command:
 
 - [ ] configure
   - [ ] modify and write configfile
+  - [ ] allow to add aliases for commands
+    - [ ] e.g. new new add alias with setting passive to true
 - [ ] list
   - [ ] add option to show only open activities
   - [ ] add tests

@@ -15,10 +15,14 @@ It has the following columns:
 """
 
 import sqlite3
+from datetime import datetime
 from typing import Any, cast
 
+import pendulum
 from pendulum.datetime import DateTime
-from pydantic import BaseModel
+from pendulum.parser import parse
+from pendulum.period import Period
+from pydantic import BaseModel, validator
 
 
 class Sentinel:
@@ -34,6 +38,29 @@ class TimeSlot(BaseModel):
     passive: bool = False
     tags: str | None = None
     description: str | None = None
+
+    @validator("start")
+    def parse_start(cls, value: str | datetime | DateTime) -> DateTime:
+        if isinstance(value, DateTime):
+            return value
+        if isinstance(value, datetime):
+            return parse(str(value))
+        return parse(value)
+
+    @validator("end")
+    def parse_end(cls, value: str | datetime | DateTime | None) -> DateTime | None:
+        if value is None:
+            return None
+        return cls.parse_start(value)
+
+    @property
+    def duration(self) -> Period:
+        if self.end is None:
+            duration = cast(Period, pendulum.now() - self.start)
+        else:
+            duration = cast(Period, self.end - self.start)
+
+        return duration
 
 
 class PensiveRow(TimeSlot):
