@@ -16,6 +16,7 @@ class ComponentType(Enum):
     DATE = "date"
     DELTA = "delta"
     DELTA_WITH_TIME = "delta_with_time"
+    UNKNOWN = "unknown"
 
 
 class DateDict(TypedDict, total=False):
@@ -57,7 +58,9 @@ def get_component_type(component: str) -> ComponentType:
         return ComponentType.TIME
     if "-" in component:
         return ComponentType.DATE
-    return ComponentType.DATE
+    if component.isnumeric():
+        return ComponentType.DATE
+    return ComponentType.UNKNOWN
 
 
 def parse_time(time: str, now: DateTime) -> DateTime:
@@ -70,6 +73,8 @@ def parse_time(time: str, now: DateTime) -> DateTime:
             ret["hour"] = int(hour)
             ret["minute"] = int(minute)
             ret["second"] = int(second)
+        case _:
+            raise ValueError(f"Invalid time: {time}")
     return now.set(**ret)
 
 
@@ -85,12 +90,17 @@ def parse_date(date: str, now: DateTime) -> DateTime:
             ret["day"] = int(day)
         case [day]:
             ret["day"] = int(day)
+        case _:
+            raise ValueError(f"Invalid date: {date}")
     return now.set(**ret)
 
 
 def parse_delta(delta: str, now: DateTime) -> DateTime:
     ret = dict()
-    for match in delta_components.finditer(delta):
+    matches = list(delta_components.finditer(delta))
+    if not matches:
+        raise ValueError(f"Invalid delta: {delta}")
+    for match in matches:
         sign = match.group("sign")
         value = int(match.group("value"))
         unit = match.group("unit")
@@ -100,7 +110,7 @@ def parse_delta(delta: str, now: DateTime) -> DateTime:
             ret["days"] = value
         elif unit == "h":
             ret["hours"] = value
-        elif unit == "m":
+        elif unit == "m":  # pragma: no branch
             ret["minutes"] = value
 
     return now + Duration(**ret)
@@ -132,6 +142,9 @@ def single_time_parse(
             now = parse_date(date, now)
         case [(delta, ComponentType.DELTA)]:
             now = parse_delta(delta, now)
+        case [(delta, ComponentType.DELTA), (time, ComponentType.TIME)]:
+            now = parse_delta(delta, now)
+            now = parse_time(time, now)
         case [(delta_with_time, ComponentType.DELTA_WITH_TIME)]:
             now = parse_delta_with_time(delta_with_time, now)
         case [(date, ComponentType.DATE), (time, ComponentType.TIME)]:
@@ -191,10 +204,12 @@ def parse_args(
         end = single_time_parse(end, now=start)
     else:
         end = None
-    if single_time:
-        return start
     if prefer_full_days:
         start = start.start_of("day")
         if not end:
             end = start.end_of("day")
+        else:
+            end = end.end_of("day")
+    if single_time:
+        return start
     return start, end

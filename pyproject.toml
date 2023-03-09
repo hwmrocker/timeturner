@@ -34,3 +34,15 @@ timeturner = 'timeturner.run:entrypoint'
 [tool.pyright]
 pythonVersion = "3.10"
 useLibraryCodeForTypes = true
+
+[tool.coverage.run]
+branch = true
+source = ["timeturner"]
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.",
+]
+show_missing = true
