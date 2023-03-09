@@ -15,7 +15,7 @@ To start tracking an activity, run the following command:
 
 
 ```
-timeturner start
+timeturner add
 ```
 
 This will record the current time as the start of your activity.
@@ -27,7 +27,7 @@ This will record the current time as the start of your activity.
 If you forgot to start tracking an activity, you can add it with the following command:
 
 ```
-timeturner start <start_time>
+timeturner add <start_time>
 ```
 
 ### Stopping an Activity
@@ -35,7 +35,7 @@ timeturner start <start_time>
 To stop tracking the current activity, run the following command:
 
 ```
-timeturner stop
+timeturner end
 ```
 
 This will record the current time as the end of your activity and calculate the total duration.
@@ -51,7 +51,7 @@ timeturner add <start_time> <end_time>
 Replace <start_time> and <end_time> with the start and end times of your activity in the format YYYY-MM-DD HH:MM:SS. For example:
 
 ```
-timeturner add 2022-02-28 09:00 2022-02-28 12:00
+timeturner add 2022-02-28 09:00 - 2022-02-28 12:00
 ```
 
 This will add the activity with the specified start and end times to your records.
