@@ -102,7 +102,6 @@ TODOs:
 - [ ] Add Configuration
 - [ ] show and generate tui output
 - [ ] Add section about contributions
-- [ ] Add license
 - [ ] Add precommit hook to ensure code is formatted
 - [ ] Add version and git hash to build, so it can be shown in the tui
 - [ ] Generate docstrings for DB methods
