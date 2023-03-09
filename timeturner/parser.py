@@ -2,7 +2,7 @@ import re
 
 # from pendulum.tz.timezone import Timezone
 from enum import Enum
-from typing import Any, Literal, TypedDict, cast, overload
+from typing import Any, Literal, TypedDict, overload
 
 import pendulum
 from pendulum.datetime import DateTime
@@ -107,7 +107,7 @@ def parse_delta(delta: str, now: DateTime) -> DateTime:
 
 
 def parse_delta_with_time(delta_with_time: str, now: DateTime) -> DateTime:
-    ret = DateTimeDict()
+    DateTimeDict()
     delta, time = delta_with_time.split("@")
     now = parse_delta(delta, now)
     return parse_time(time, now)

@@ -256,7 +256,8 @@ class DatabaseConnection:
         """
         Get all time slots between the given start and end times.
 
-        This includes slots that start before the given start time and / or end after the given end time.
+        This includes slots that start before the given start time and / or end after
+        the given end time.
         """
         cursor = self.connection.cursor()
 

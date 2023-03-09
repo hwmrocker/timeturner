@@ -22,6 +22,7 @@ freezegun = "^1.2.2"
 pytest-dependency = "^0.5.1"
 pyright = "^1.1.298"
 pytest-cov = "^4.0.0"
+ruff = "^0.0.254"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -29,3 +30,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 timeturner = 'timeturner.run:entrypoint'
+
+[tool.pyright]
+pythonVersion = "3.10"
+useLibraryCodeForTypes = true

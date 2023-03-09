@@ -1,4 +1,3 @@
-from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -7,7 +6,7 @@ from pydantic.json import pydantic_encoder
 from rich.console import Console
 
 from timeturner import rich_output, timeturner
-from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
+from timeturner.db import DatabaseConnection
 
 app = typer.Typer()
 
