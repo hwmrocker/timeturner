@@ -22,10 +22,11 @@ config = dict(
 @app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
+    data = timeturner._list(time)
     if config["show_json"]:
         console.print_json(data=data, default=pydantic_encoder)
     else:
-        rich_output.print_pretty_list(timeturner._list(time))
+        rich_output.print_pretty_list(data)
 
 
 @app.command("a", hidden=True)
@@ -37,7 +38,11 @@ def add(
     # tags: str | None = None,
     # description: str | None = None,
 ):
-    console.print_json(data=timeturner.add(time), default=pydantic_encoder)
+    data = timeturner.add(time)
+    if config["show_json"]:
+        console.print_json(data=data, default=pydantic_encoder)
+    else:
+        rich_output.print_pretty_record(data)
 
 
 @app.command("e", hidden=True)

@@ -185,7 +185,6 @@ def parse_args(
     prefer_full_days: bool = False,
     single_time: bool = False,
 ) -> tuple[DateTime, DateTime | None] | DateTime:
-
     start, end = split_array(args, "-")
     start = single_time_parse(start)
     if end:

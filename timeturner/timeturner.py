@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Iterator
 
+from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
-from timeturner.loader import import_text
 from timeturner.parser import parse_args
 
 
@@ -42,4 +42,4 @@ def end(time: list[str] | None) -> PensiveRow | None:
 
 
 def import_text(db: DatabaseConnection, path: Path) -> Iterator[PensiveRow]:
-    return import_text(db, path)
+    return loader.import_text(db, path)

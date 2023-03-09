@@ -20,6 +20,7 @@ pytest = "^7.2.1"
 pytest-watch = "^4.2.0"
 freezegun = "^1.2.2"
 pytest-dependency = "^0.5.1"
+pyright = "^1.1.298"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

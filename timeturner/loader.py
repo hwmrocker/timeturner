@@ -5,7 +5,7 @@ from typing import Iterator, cast
 from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
-from timeturner.db import DatabaseConnection, TimeSlot
+from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
 
 re_date = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
@@ -68,8 +68,7 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSlot]:
         yield time_slot
 
 
-def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[TimeSlot]:
-
+def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[PensiveRow]:
     table_separator = "-" * 80 + "\n"
 
     with text_file.open() as f:
@@ -88,5 +87,4 @@ def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[TimeSlot]:
     lines = lines[: lines.index(table_separator)]
 
     for entry in extract_time_slots(lines):
-        db.add_slot(**entry.dict())
-        yield entry
+        yield db.add_slot(**entry.dict())
