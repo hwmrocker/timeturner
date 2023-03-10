@@ -28,16 +28,22 @@ def _pretty_duration(duration: Duration) -> str:
     return str(" ".join(parts))
 
 
-def pretty_duration(duration: Duration) -> str:
+def account_for_breaks(duration: Duration) -> tuple[Duration, int]:
     # Nach 4h Arbeitszeit: 15 Minuten
     # Nach 6:15h Arbeitszeit: weitere 30 Minuten.
     if duration.total_minutes() > (6 * 60 + 15):
         duration_without_breaks = duration - Duration(minutes=45)
-        return f"{_pretty_duration(duration_without_breaks)} (+45m break)"
+        return duration_without_breaks, 45
 
     elif duration.total_minutes() > (4 * 60):
         duration_without_breaks = duration - Duration(minutes=15)
-        return f"{_pretty_duration(duration_without_breaks)} (+15m break)"
+        return duration_without_breaks, 15
+    return duration, 0
+
+
+def pretty_duration(duration: Duration, breaks: int) -> str:
+    if breaks:
+        return f"{_pretty_duration(duration)} (+{breaks}m break)"
     return _pretty_duration(duration)
 
 
@@ -55,15 +61,21 @@ def print_pretty_list(time_slots: list[PensiveRow]) -> None:
     table.add_column("Duration", style="dim", width=20)
     table.add_column("Description", style="dim", width=20)
 
+    total_durations = []
+
     for slot in time_slots:
+        actual_duration, breaks = account_for_breaks(slot.duration)
+        total_durations.append(actual_duration)
         table.add_row(
             slot.start.format("YYYY-MM-DD HH:mm"),
             slot.end.time().isoformat() if slot.end else "",
-            pretty_duration(slot.duration),
+            pretty_duration(actual_duration, breaks),
             slot.description,
         )
 
     console.print(table)
+    total_duration = sum(total_durations, Duration())
+    print(f"Total: {total_duration.total_hours():.0f}h {total_duration.minutes}m")
 
 
 def print_pretty_record(time_slot: PensiveRow | None) -> None:

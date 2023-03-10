@@ -8,6 +8,8 @@ from pendulum.parser import parse
 
 from timeturner.db import PensiveRow
 
+pytestmark = pytest.mark.dependency(name="db_tests")
+
 
 @pytest.mark.dependency(name="add_slot")
 def test_add_slot(db):
