@@ -1,7 +1,6 @@
-
 import pytest
 
-from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
+from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner import parser
 
 # tz_offset = pendulum.now().offset_hours
@@ -22,7 +21,7 @@ COMPONENT_TYPE_EXAMPLES = [
     pytest.param(
         "-1d@9:00", parser.ComponentType.DELTA_WITH_TIME, id="-delta days with time"
     ),
-    pytest.param("12", parser.ComponentType.DATE, id="date day only"),
+    pytest.param("12", parser.ComponentType.NUMBER, id="date day only"),
     pytest.param("04-12", parser.ComponentType.DATE, id="date with month and day"),
     pytest.param(
         "2022-04-12", parser.ComponentType.DATE, id="date with year, month and day"
@@ -30,9 +29,51 @@ COMPONENT_TYPE_EXAMPLES = [
 ]
 
 
+@pytest.mark.parametrize(
+    "include_list_args", [True, False]
+)  # it should return the same result for those general cases
 @pytest.mark.parametrize("component, expected", COMPONENT_TYPE_EXAMPLES)
-def test_component_type(component, expected):
-    assert parser.get_component_type(component) == expected
+def test_component_type(component, include_list_args, expected):
+    assert (
+        parser.get_component_type(component, include_list_args=include_list_args)
+        == expected
+    )
+
+
+COMPONENT_TYPE_LIST_ARGS_EXAMPLES = [
+    # pytest.param("now", parser.ComponentType.ALIAS, id="now"),
+    pytest.param("today", parser.ComponentType.ALIAS, id="today"),
+    pytest.param("yesterday", parser.ComponentType.ALIAS, id="yesterday"),
+    pytest.param("week", parser.ComponentType.ALIAS, id="week"),
+    pytest.param("month", parser.ComponentType.ALIAS, id="month"),
+    pytest.param("year", parser.ComponentType.ALIAS, id="year"),
+    pytest.param("1d", parser.ComponentType.RANGE, id="1d"),
+    pytest.param("1day", parser.ComponentType.RANGE, id="1day"),
+    pytest.param("1w", parser.ComponentType.RANGE, id="1w"),
+    pytest.param("1week", parser.ComponentType.RANGE, id="1week"),
+    pytest.param(
+        "1M", parser.ComponentType.RANGE, id="1M"
+    ),  # M can be only upper, lower case is too similar to minutes
+    pytest.param("1month", parser.ComponentType.RANGE, id="1month"),
+    pytest.param("1Y", parser.ComponentType.RANGE, id="1Y"),
+    pytest.param(
+        "1y", parser.ComponentType.RANGE, id="1y"
+    ),  # y can be upper or lower case
+    pytest.param("1year", parser.ComponentType.RANGE, id="1year"),
+]
+
+
+@pytest.mark.parametrize("component, expected", COMPONENT_TYPE_LIST_ARGS_EXAMPLES)
+def test_component_type_list_args(component, expected):
+    assert parser.get_component_type(component, include_list_args=True) == expected
+
+
+@pytest.mark.parametrize("component, expected", COMPONENT_TYPE_LIST_ARGS_EXAMPLES)
+def test_component_type_list_args_not_valid_for_add(component, expected):
+    assert (
+        parser.get_component_type(component, include_list_args=False)
+        == parser.ComponentType.UNKNOWN
+    )
 
 
 """
@@ -126,6 +167,154 @@ def test_parse_args(args, single_time, prefer_full_days, expected):
         single_time=single_time,
         prefer_full_days=prefer_full_days,
     )
+    assert observed == expected
+
+
+PARSE_LIST_ARGS_EXAMPLES = [
+    pytest.param(
+        [],
+        dict(),
+        (test_now.start_of("day"), test_now.end_of("day")),
+        id="no args",
+    ),
+    pytest.param(
+        [],
+        dict(
+            now=test_now.add(days=1),
+        ),
+        (test_now.add(days=1).start_of("day"), test_now.add(days=1).end_of("day")),
+        id="no args, passing now",
+    ),
+    pytest.param(
+        ["2d"],  # checking yesterday and today
+        dict(),
+        (test_now.subtract(days=1).start_of("day"), test_now.end_of("day")),
+        id="2d",
+    ),
+    pytest.param(
+        ["2days"],  # checking yesterday and today
+        dict(),
+        (test_now.subtract(days=1).start_of("day"), test_now.end_of("day")),
+        id="2days",
+    ),
+    pytest.param(
+        ["week"],  # checking current week
+        dict(),
+        (test_now.start_of("week"), test_now.end_of("week")),
+        id="week",
+    ),
+    pytest.param(
+        ["month"],  # checking current month
+        dict(),
+        (test_now.start_of("month"), test_now.end_of("month")),
+        id="month",
+    ),
+    pytest.param(
+        ["year"],  # checking current year
+        dict(),
+        (test_now.start_of("year"), test_now.end_of("year")),
+        id="year",
+    ),
+    pytest.param(
+        ["today"],  # checking today
+        dict(),
+        (test_now.start_of("day"), test_now.end_of("day")),
+        id="today",
+    ),
+    pytest.param(
+        ["yesterday"],  # checking yesterday
+        dict(),
+        (
+            test_now.subtract(days=1).start_of("day"),
+            test_now.subtract(days=1).end_of("day"),
+        ),
+        id="yesterday",
+    ),
+    pytest.param(
+        ["4w"],  # checking last 4 weeks
+        dict(),
+        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        id="4w",
+    ),
+    pytest.param(
+        ["4week"],  # checking last 4 weeks
+        dict(),
+        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        id="4week",
+    ),
+    pytest.param(
+        ["4weeks"],  # checking last 4 weeks
+        dict(),
+        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        id="4weeks",
+    ),
+    pytest.param(
+        ["4M"],  # checking last 4 months
+        dict(),
+        (test_now.subtract(months=3).start_of("month"), test_now.end_of("month")),
+        id="4M",
+    ),
+    pytest.param(
+        ["1y"],  # checking current year
+        dict(),
+        (test_now.start_of("year"), test_now.end_of("year")),
+        id="1y",
+    ),
+    pytest.param(
+        ["2years"],  # checking last and current year
+        dict(),
+        (test_now.subtract(years=1).start_of("year"), test_now.end_of("year")),
+        id="2years",
+    ),
+    pytest.param(
+        ["14"],  # checking since the 14th of the current month
+        dict(),
+        (
+            test_now.set(day=14).start_of("day"),
+            test_now.end_of("day"),
+        ),
+        id="14",
+    ),
+    pytest.param(
+        ["14", "12:00"],  # checking since the 14th of the current month
+        dict(),
+        (
+            test_now.set(day=14, hour=12, minute=0, second=0),
+            test_now.end_of("day"),
+        ),
+        id="14 12:00",
+    ),
+    pytest.param(
+        ["-17d", "-", "+4d"],  # checking since the 14th of the current month
+        dict(),
+        (
+            test_now.set(day=8).start_of("day"),
+            test_now.set(day=12).end_of("day"),
+        ),
+        id="-17d - +4d",
+    ),
+    pytest.param(
+        [
+            "-17d",
+            "7:00",
+            "-",
+            "+4d",
+            "18:00",
+        ],  # checking since the 14th of the current month
+        dict(),
+        (
+            test_now.start_of("day").set(day=8, hour=7),
+            test_now.start_of("day").set(day=12, hour=18),
+        ),
+        id="-17d 7:00 - +4d 18:00",
+    ),
+]
+
+
+@pytest.mark.parametrize("args, config, expected", PARSE_LIST_ARGS_EXAMPLES)
+@freeze_time_at_1985_25_05__15_34_12
+def test_parse_list_args(args, config, expected):
+    observed = parser.parse_list_args(args, **config)
     assert observed == expected
 
 

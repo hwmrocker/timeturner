@@ -265,6 +265,7 @@ class DatabaseConnection:
             f"""
             SELECT pk, start, end, passive, tags, description FROM {self.table_name}
             WHERE start <= ? AND (end >= ? OR end IS NULL)
+            ORDER BY start ASC
             """,
             (str(end), str(start)),
         )

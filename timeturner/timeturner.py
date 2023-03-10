@@ -3,7 +3,7 @@ from typing import Iterator
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
-from timeturner.parser import parse_args
+from timeturner.parser import parse_args, parse_list_args
 
 
 def _list(
@@ -13,8 +13,7 @@ def _list(
 ) -> list[PensiveRow]:
     if time is None:
         time = []
-    start, end = parse_args(time, prefer_full_days=True)
-    print(start, end)
+    start, end = parse_list_args(time)
     rows = db.get_slots_between(start, end)
     return [row for row in rows]
 
