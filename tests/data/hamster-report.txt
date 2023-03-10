@@ -1,0 +1,23 @@
+
+Start            | End              | Duration | Activity                    | Category
+--------------------------------------------------------------------------------
+2023-01-02 08:30 | 2023-01-02 09:00 | 30min    | install system              | setup
+2023-01-02 09:00 | 2023-01-02 11:20 | 2h 20min | basics                      | setup
+    Setup Git, jira, outlook, ... example description
+    #pair
+2023-01-02 11:20 | 2023-01-02 12:17 | 57min    | docker                      | setup
+2023-01-02 12:17 | 2023-01-02 12:55 | 38min    | lunch break                 | break
+2023-01-02 12:55 | 2023-01-02 13:30 | 35min    | daily                       |
+2023-01-02 13:30 | 2023-01-02 15:00 | 1h 30min | setup                       | setup
+    docker, hr, only description
+2023-01-02 15:00 | 2023-01-02 16:34 | 1h 34min | refinement                  | scrumm
+    #only-tag
+2023-01-02 16:34 | 2023-01-02 16:46 | 12min    | break                       | break
+2023-02-16 23:15 | 2023-02-17 07:45 | 8h 30min |                             | travel
+2023-02-20 07:00 | 2023-02-20 17:00 | 10h      | work                        | Work
+2023-03-06 07:58 |                  | 17min    | work                        | Work
+2023-03-13 14:00 |                  | NEGATIVE | work                        | Work
+--------------------------------------------------------------------------------
+Work: 114h 50min, setup: 29h 22min, Unsorted: 9h 5min, meeting: 7h 42min,
+break: 5h 33min, pairing: 3h 16min, scrumm: 1h 34min
+Total:  171h 22min

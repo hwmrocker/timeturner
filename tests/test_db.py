@@ -6,7 +6,7 @@ from pendulum import datetime
 # from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
-from timeturner.db import DatabaseConnection, PensiveRow
+from timeturner.db import PensiveRow
 
 
 @pytest.mark.dependency(name="add_slot")

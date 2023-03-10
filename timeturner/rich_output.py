@@ -33,11 +33,11 @@ def pretty_duration(duration: Duration) -> str:
     # Nach 6:15h Arbeitszeit: weitere 30 Minuten.
     if duration.total_minutes() > (6 * 60 + 15):
         duration_without_breaks = duration - Duration(minutes=45)
-        return f"{_pretty_duration(duration_without_breaks)} (with 45m break)"
+        return f"{_pretty_duration(duration_without_breaks)} (+45m break)"
 
     elif duration.total_minutes() > (4 * 60):
         duration_without_breaks = duration - Duration(minutes=15)
-        return f"{_pretty_duration(duration_without_breaks)} (with 15m break)"
+        return f"{_pretty_duration(duration_without_breaks)} (+15m break)"
     return _pretty_duration(duration)
 
 

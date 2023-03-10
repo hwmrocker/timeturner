@@ -21,15 +21,15 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSlot]:
                 yield time_slot
         elif line[0] == "#":
             # this is a continuation of the previous time slot
-            if time_slot is None:
+            if time_slot is None:  # pragma: no cover
                 raise ValueError("Continuation without time slot")
             time_slot.tags = line[1:].strip()
             continue
         else:
             # this is a continuation of the previous time slot
-            if time_slot is None:
+            if time_slot is None:  # pragma: no cover
                 raise ValueError("Continuation without time slot")
-            if time_slot.description is None:
+            if time_slot.description is None:  # pragma: no cover
                 time_slot.description = line
             else:
                 time_slot.description += f"\n{line}"

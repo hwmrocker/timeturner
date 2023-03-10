@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -76,3 +77,23 @@ SINGLE_TIME_SLOT_DATA = [
 @pytest.mark.parametrize("lines, expected", SINGLE_TIME_SLOT_DATA)
 def test_extract_time_slots(lines, expected):
     assert list(loader.extract_time_slots(lines.splitlines())) == expected
+
+
+IMPORT_TEXT_DATA = [
+    pytest.param(Path("tests/data/hamster-report.txt"), 12, id="hamster-list.txt"),
+    pytest.param(Path("tests/data/empty-hamster-report.txt"), 0, id="hamster-list.txt"),
+]
+
+
+@pytest.mark.parametrize("file, expected_records", IMPORT_TEXT_DATA)
+def test_import_file(db, file, expected_records):
+    for event in loader.import_text(db, file):
+        print(event)
+
+    assert len(db.get_all_slots()) == expected_records
+
+
+def test_import_file_with_empty_file(db):
+    with pytest.raises(ValueError):
+        for event in loader.import_text(db, Path("tests/data/empty_file.txt")):
+            print(event)
