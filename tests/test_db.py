@@ -9,11 +9,6 @@ from pendulum.parser import parse
 from timeturner.db import DatabaseConnection, PensiveRow
 
 
-@pytest.fixture
-def db():
-    return DatabaseConnection(":memory:")
-
-
 @pytest.mark.dependency(name="add_slot")
 def test_add_slot(db):
     start_date = datetime(1985, 5, 25, 0, 0, 0, tz="local")
