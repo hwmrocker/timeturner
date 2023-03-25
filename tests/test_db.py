@@ -17,7 +17,7 @@ def test_add_slot(db):
     assert db.add_slot(start_date).pk == 1
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
-    assert rows[0] == (1, str(start_date), None, 0, None, None)
+    assert rows[0] == (1, str(start_date), None, 0, None)
 
 
 def test_add_slot_with_end(db):
@@ -27,14 +27,13 @@ def test_add_slot_with_end(db):
     )
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
-    pk, start, end, passive, tags, description = rows[0]
+    pk, start, end, passive, description = rows[0]
 
     db_entry = (
         pk,
         parse(start),
         parse(end),
         passive,
-        tags,
         description,
     )
     expected = (
@@ -42,7 +41,6 @@ def test_add_slot_with_end(db):
         datetime(1985, 5, 25, 0, 0, 0, tz="local"),
         datetime(1985, 5, 25, 1, 0, 0, tz="local"),
         0,
-        None,
         None,
     )
 
@@ -101,7 +99,7 @@ def _get_all_combinations_of_slots():
     possible_elements = [
         ("end", datetime(1985, 5, 25, 1, 0, 0, tz="local")),
         ("passive", True),
-        ("tags", "tag1"),
+        ("tags", ["tag1"]),
         ("description", "description1"),
     ]
     for i in range(len(possible_elements)):
@@ -143,7 +141,7 @@ UPDATE_SLOT_TEST_CASES = [
             start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
             end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
             passive=True,
-            tags="tag1",
+            tags=["tag1"],
             description="description1",
         ),
         PensiveRow(
@@ -151,7 +149,7 @@ UPDATE_SLOT_TEST_CASES = [
             start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
             end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
             passive=True,
-            tags="tag1",
+            tags=["tag1"],
             description="description1",
         ),
         id="update all fields",
@@ -161,7 +159,7 @@ UPDATE_SLOT_TEST_CASES = [
             start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
             end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
             passive=True,
-            tags="tag1",
+            tags=["tag1"],
             description="description1",
         ),
         dict(start=datetime(1985, 5, 25, 0, 0, 0, tz="local")),
@@ -170,7 +168,7 @@ UPDATE_SLOT_TEST_CASES = [
             start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
             end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
             passive=True,
-            tags="tag1",
+            tags=["tag1"],
             description="description1",
         ),
         id="only change one field",
@@ -180,7 +178,7 @@ UPDATE_SLOT_TEST_CASES = [
             start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
             end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
             passive=True,
-            tags="tag1",
+            tags=["tag1"],
             description="description1",
         ),
         dict(

@@ -36,7 +36,7 @@ SINGLE_TIME_SLOT_DATA = [
             TimeSlot(
                 start=parse("2023-01-02 09:00"),
                 end=parse("2023-01-02 11:20"),
-                tags="pair",
+                tags=["pair"],
                 description="setup@basics\nSetup Git, jira, outlook, ... mit sergiy",
                 passive=False,
             )

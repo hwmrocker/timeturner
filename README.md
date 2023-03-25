@@ -96,14 +96,19 @@ TODOs:
 - [ ] add a change log
 - [ ] README
   - [ ] auto generate config options
+- [ ] db
+  - [ ] add table for tags
+
 
 TODOS by command:
 
 - [ ] add
   - [ ] auto close activities that are still open
   - [ ] break up activities when a activity is inserted in the middle
+  - [ ] allow passive activities
+  - [ ] allow sick days
   - [ ] add tests
-- [ ] stop (maybe rename to end)
+- [ ] end
   - [ ] add tests
 
 - [ ] configure
@@ -112,6 +117,7 @@ TODOS by command:
     - [ ] e.g. new new add alias with setting passive to true
 - [ ] list
   - [ ] add option to show only open activities
+  - [ ] group by year, month, week, day
   - [ ] add tests
 - [ ] report
   - [ ] add tests

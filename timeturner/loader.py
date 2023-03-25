@@ -23,7 +23,7 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSlot]:
             # this is a continuation of the previous time slot
             if time_slot is None:  # pragma: no cover
                 raise ValueError("Continuation without time slot")
-            time_slot.tags = line[1:].strip()
+            time_slot.tags = [e[1:].strip() for e in line.split(",")]
             continue
         else:
             # this is a continuation of the previous time slot

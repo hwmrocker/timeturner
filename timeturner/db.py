@@ -36,7 +36,7 @@ class TimeSlot(BaseModel):
     start: DateTime
     end: DateTime | None = None
     passive: bool = False
-    tags: str | None = None
+    tags: list[str] | None = None
     description: str | None = None
 
     @validator("start")
@@ -55,6 +55,16 @@ class TimeSlot(BaseModel):
         if value is None:
             return None
         return cls.parse_start(value)
+
+    @validator("tags")
+    def parse_tags(cls, value: str | list[str] | None) -> list[str] | None:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return value.split(",")
+        if isinstance(value, list):
+            return value
+        raise ValueError(f"Could not parse {value} as a list of tags")
 
     @property
     def duration(self) -> Period:
@@ -96,8 +106,25 @@ class DatabaseConnection:
                 start DATETIME,
                 end DATETIME,
                 passive BOOLEAN DEFAULT FALSE,
-                tags TEXT,
                 description TEXT
+            )
+            """
+        )
+        cursor.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS tags (
+                pk INTEGER PRIMARY KEY AUTOINCREMENT,
+                tag TEXT
+            )
+            """
+        )
+        cursor.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.table_name}_tags (
+                {self.table_name}_pk INTEGER,
+                tags_pk INTEGER,
+                FOREIGN KEY({self.table_name}_pk) REFERENCES {self.table_name}(pk),
+                FOREIGN KEY(tags_pk) REFERENCES tags(pk)
             )
             """
         )
@@ -108,7 +135,7 @@ class DatabaseConnection:
         start: DateTime,
         end: DateTime | None = None,
         passive: bool | None = False,
-        tags: str | None = None,
+        tags: list[str] | None = None,
         description: str | None = None,
     ) -> PensiveRow:
         """
@@ -119,16 +146,16 @@ class DatabaseConnection:
         # fix passive if it is None
         if passive is None:
             passive = False
-
+        if tags is None:
+            tags = []
         query = f"""
-            INSERT INTO {self.table_name} (start, end, passive, tags, description)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO {self.table_name} (start, end, passive, description)
+            VALUES (?, ?, ?, ?)
             """
         values = (
             str_if_not_none(start),
             str_if_not_none(end),
             passive,
-            tags,
             description,
         )
         cursor = self.connection.cursor()
@@ -136,10 +163,51 @@ class DatabaseConnection:
             query,
             values,
         )
+        for tag in tags:
+            tag_pk = self.insert_or_get_tag_pk(tag)
+            cursor.execute(
+                f"""
+                INSERT INTO {self.table_name}_tags ({self.table_name}_pk, tags_pk)
+                VALUES (?, ?)
+                """,
+                (cursor.lastrowid, cursor.lastrowid),
+            )
         self.connection.commit()
         if cursor.lastrowid is None:
             raise Exception("Failed to insert time slot into database")
         return cast(PensiveRow, self.get_slot(cursor.lastrowid))
+
+    def insert_or_get_tag_pk(self, tag: str) -> int:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """
+            SELECT pk FROM tags WHERE tag = ?
+            """,
+            (tag,),
+        )
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute(
+                """
+                INSERT INTO tags (tag) VALUES (?)
+                """,
+                (tag,),
+            )
+            self.connection.commit()
+            return cursor.lastrowid
+        return result[0]
+
+    def get_tags_for_slot(self, pk: int) -> list[str]:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            f"""
+            SELECT tags.tag FROM {self.table_name}_tags
+            INNER JOIN tags ON tags.pk = {self.table_name}_tags.tags_pk
+            WHERE {self.table_name}_tags.{self.table_name}_pk = ?
+            """,
+            (pk,),
+        )
+        return [tag for tag, in cursor.fetchall()]
 
     def update_slot(
         self,
@@ -147,7 +215,7 @@ class DatabaseConnection:
         start: DateTime | Sentinel = sentinel,
         end: DateTime | None | Sentinel = sentinel,
         passive: bool | None | Sentinel = sentinel,
-        tags: str | None | Sentinel = sentinel,
+        tags: list[str] | None | Sentinel = sentinel,
         description: str | None | Sentinel = sentinel,
     ) -> None:
         """
@@ -166,9 +234,6 @@ class DatabaseConnection:
             if passive is None:
                 passive = False
             values_to_update.append(passive)
-        if tags is not sentinel:
-            elements_to_update.append("tags = ?")
-            values_to_update.append(tags)
         if description is not sentinel:
             elements_to_update.append("description = ?")
             values_to_update.append(description)
@@ -187,6 +252,52 @@ class DatabaseConnection:
             query,
             values,
         )
+
+        # insert all tags that are not already in the database
+        if tags is not sentinel:
+            if tags is None:
+                tags = []
+            stored_tags = set(self.get_tags_for_slot(pk))
+            tags_to_insert = set(tags) - stored_tags
+            for tag in tags_to_insert:
+                tag_pk = self.insert_or_get_tag_pk(tag)
+                cursor.execute(
+                    f"""
+                    INSERT INTO {self.table_name}_tags ({self.table_name}_pk, tags_pk)
+                    VALUES (?, ?)
+                    """,
+                    (pk, tag_pk),
+                )
+            tags_to_remove = stored_tags - set(tags)
+            for tag in tags_to_remove:
+                cursor.execute(
+                    f"""
+                    DELETE FROM {self.table_name}_tags
+                    WHERE {self.table_name}_pk = ? AND tags_pk = ?
+                    """,
+                    (pk, self.insert_or_get_tag_pk(tag)),
+                )
+
+                # if tag is not used anywhere else, delete it from the tags table
+                cursor.execute(
+                    f"""
+                    SELECT COUNT(*) FROM tags
+                    INNER JOIN {self.table_name}_tags ON tags.pk = {self.table_name}_tags.tags_pk
+                    WHERE tags.tag = ?
+                    """,
+                    (tag,),
+                )
+                count = cursor.fetchone()
+                if count is None:
+                    raise Exception("Failed to get count of tags")
+                if count[0] == 0:
+                    cursor.execute(
+                        """
+                        DELETE FROM tags WHERE tag = ?
+                        """,
+                        (tag,),
+                    )
+
         self.connection.commit()
 
     def get_latest_slot(self) -> PensiveRow | None:
@@ -196,7 +307,7 @@ class DatabaseConnection:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            SELECT pk, start, end, passive, description FROM {self.table_name}
             ORDER BY start DESC LIMIT 1
             """
         )
@@ -204,7 +315,7 @@ class DatabaseConnection:
         row = cursor.fetchone()
         if row is None:
             return None
-        pk, start, end, passive, tags, description = row
+        pk, start, end, passive, description = row
         if passive is None:
             passive = False
         return PensiveRow(
@@ -212,7 +323,7 @@ class DatabaseConnection:
             start=start,
             end=end,
             passive=passive,
-            tags=tags,
+            tags=self.get_tags_for_slot(pk),
             description=description,
         )
 
@@ -230,7 +341,7 @@ class DatabaseConnection:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            SELECT pk, start, end, passive, description FROM {self.table_name}
             WHERE pk = ?
             """,
             (pk,),
@@ -239,7 +350,7 @@ class DatabaseConnection:
         row = cursor.fetchone()
         if row is None:
             return None
-        pk, start, end, passive, tags, description = row
+        pk, start, end, passive, description = row
         if passive is None:
             passive = False
         return PensiveRow(
@@ -247,7 +358,7 @@ class DatabaseConnection:
             start=start,
             end=end,
             passive=passive,
-            tags=tags,
+            tags=self.get_tags_for_slot(pk),
             description=description,
         )
 
@@ -266,7 +377,7 @@ class DatabaseConnection:
 
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            SELECT pk, start, end, passive, description FROM {self.table_name}
             WHERE start <= ? AND (end >= ? OR end IS NULL)
             ORDER BY start ASC
             """,
@@ -280,10 +391,10 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
-                tags=tags,
+                tags=self.get_tags_for_slot(pk),
                 description=description,
             )
-            for pk, start, end, passive, tags, description in rows
+            for pk, start, end, passive, description in rows
         ]
 
     def get_all_slots(self) -> list[PensiveRow]:
@@ -291,7 +402,7 @@ class DatabaseConnection:
 
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, tags, description FROM {self.table_name}
+            SELECT pk, start, end, passive, description FROM {self.table_name}
             """
         )
 
@@ -302,8 +413,8 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
-                tags=tags,
+                tags=self.get_tags_for_slot(pk),
                 description=description,
             )
-            for pk, start, end, passive, tags, description in rows
+            for pk, start, end, passive, description in rows
         ]

@@ -1,6 +1,6 @@
 from os import environ
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import tomlkit
 from pydantic import BaseModel, BaseSettings
@@ -55,6 +55,7 @@ class DatabaseSettings(BaseModel):
 
 class TimeTurnerSettings(Settings):
     database: DatabaseSettings = DatabaseSettings()
+    output: Literal["json", "rich"] = "rich"
 
     class Config:
         env_file_encoding = "utf-8"
