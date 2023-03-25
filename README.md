@@ -38,6 +38,16 @@ If you forgot to track an activity in the past, you can add it with `timeturner 
 
 ![`timeturner add -- -1d@9:00 - +8h45m`](img/add_past.svg)
 
+## Configuration
+
+| Environment Variable       | Default Value                    | Description                                  |
+| -------------------------- | -------------------------------- | -------------------------------------------- |
+| TIMETURNER_CONFIG_HOME     | ~/$XDG_CONFIG_HOME/timeturner    | The directory for configuration files.       |
+| TIMETURNER_CONFIG_FILE     | timeturner.toml                  | The configuration file to use.               |
+| TIMETURNER_DATABASE__HOME  | value of $TIMETURNER_CONFIG_HOME | The directory to store the database file in. |
+| TIMETURNER_DATABASE__FILE  | timeturner.db                    | The database file to use.                    |
+| TIMETURNER_DATABASE__TABLE | pensive                          | The table to use in the database.            |
+
 ## Examples
 
 ### Examples for times
@@ -70,8 +80,6 @@ TODOs:
 - [ ] Add Changelog
 - [ ] Add Configuration
   - [ ] ignore seconds
-  - [ ] database path
-  - [ ] config path
   - [ ] freeze time, to generate useful images
   - [ ] automatic rest periods
 - [ ] show and generate tui output
@@ -86,7 +94,8 @@ TODOs:
 - [ ] Add logging
   - [ ] allow different log levels for database and application
 - [ ] add a change log
-- [ ]
+- [ ] README
+  - [ ] auto generate config options
 
 TODOS by command:
 

@@ -38,7 +38,7 @@ def load_config_file(settings: BaseSettings) -> dict[str, Any]:
 
 class DatabaseSettings(BaseModel):
     file: str = "timeturner.db"
-    home: Path = DEFAULT_CONFIG_HOME
+    home: Path = config_settings.config_home
     table_name: str = "pensieve"
 
     @property
