@@ -77,9 +77,12 @@ def str_if_not_none(value: Any) -> str | None:
 
 
 class DatabaseConnection:
-    table_name = "pensieve"
-
-    def __init__(self, database_file: str = "timeturner.db"):
+    def __init__(
+        self,
+        database_file: str = "timeturner.db",
+        table_name: str = "pensieve",
+    ):
+        self.table_name = table_name
         self.database_file = database_file
         self.connection = sqlite3.connect(self.database_file)
         self.create_table()

@@ -4,12 +4,13 @@ from typing import Iterator
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
 from timeturner.parser import parse_args, parse_list_args
+from timeturner.settings import settings
 
 
 def _list(
     time: list[str] | None,
     *,
-    db: DatabaseConnection = DatabaseConnection(),
+    db: DatabaseConnection = settings.database.connection,
 ) -> list[PensiveRow]:
     if time is None:
         time = []
@@ -21,7 +22,7 @@ def _list(
 def add(
     time: list[str] | None,
     *,
-    db: DatabaseConnection = DatabaseConnection(),
+    db: DatabaseConnection = settings.database.connection,
 ) -> PensiveRow:
     if time is None:
         time = []
@@ -32,7 +33,7 @@ def add(
 def end(
     time: list[str] | None,
     *,
-    db: DatabaseConnection = DatabaseConnection(),
+    db: DatabaseConnection = settings.database.connection,
 ) -> PensiveRow | None:
     if time is None:
         time = []
