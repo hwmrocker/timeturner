@@ -6,7 +6,7 @@ from pendulum.datetime import DateTime
 from pendulum.parser import parse as _parse
 
 from timeturner import loader
-from timeturner.db import TimeSlot
+from timeturner.db import TimeSegment
 
 
 def parse(s: str) -> DateTime:
@@ -17,7 +17,7 @@ SINGLE_TIME_SLOT_DATA = [
     pytest.param(
         "2023-01-02 08:30 | 2023-01-02 09:00 | 30min    | install system              | setup\n",
         [
-            TimeSlot(
+            TimeSegment(
                 start=parse("2023-01-02 08:30"),
                 end=parse("2023-01-02 09:00"),
                 tags=None,
@@ -33,7 +33,7 @@ SINGLE_TIME_SLOT_DATA = [
     #pair
 """,
         [
-            TimeSlot(
+            TimeSegment(
                 start=parse("2023-01-02 09:00"),
                 end=parse("2023-01-02 11:20"),
                 tags=["pair"],
@@ -48,7 +48,7 @@ SINGLE_TIME_SLOT_DATA = [
     docker, hr
 """,
         [
-            TimeSlot(
+            TimeSegment(
                 start=parse("2023-01-02 13:30"),
                 end=parse("2023-01-02 15:00"),
                 tags=None,
@@ -61,7 +61,7 @@ SINGLE_TIME_SLOT_DATA = [
     pytest.param(
         "2023-02-16 23:15 | 2023-02-17 07:45 | 8h 30min |                             | travel\n",
         [
-            TimeSlot(
+            TimeSegment(
                 start=parse("2023-02-16 23:15"),
                 end=parse("2023-02-17 07:45"),
                 tags=None,

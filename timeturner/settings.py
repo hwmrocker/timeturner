@@ -69,11 +69,9 @@ class TimeTurnerSettings(Settings):
             env_settings,
             file_secret_settings,
         ):
-            del init_settings, file_secret_settings
+            del file_secret_settings
             return (
+                init_settings,
                 env_settings,
                 load_config_file,
             )
-
-
-settings = TimeTurnerSettings()

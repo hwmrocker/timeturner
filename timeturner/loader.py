@@ -5,12 +5,12 @@ from typing import Iterator, cast
 from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
-from timeturner.db import DatabaseConnection, PensiveRow, TimeSlot
+from timeturner.db import DatabaseConnection, PensiveRow, TimeSegment
 
 re_date = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
-def extract_time_slots(lines: list[str]) -> Iterator[TimeSlot]:
+def extract_time_slots(lines: list[str]) -> Iterator[TimeSegment]:
     time_slot = None
     for line in lines:
         line = line.strip()
@@ -54,9 +54,9 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSlot]:
         # parse the tags
         category = columns[4]
 
-        # build the TimeSlot object
+        # build the TimeSegment object
 
-        time_slot = TimeSlot(
+        time_slot = TimeSegment(
             start=start,
             end=end,
             passive=category == "travel",

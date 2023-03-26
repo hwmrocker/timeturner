@@ -14,7 +14,6 @@ pendulum = "^2.1.2"
 pydantic = "^1.10.5"
 tomlkit = "^0.11.6"
 
-
 [tool.poetry.group.dev.dependencies]
 pip-audit = "^2.4.14"
 pytest = "^7.2.1"
@@ -30,7 +29,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-timeturner = 'timeturner.run:entrypoint'
+timeturner = "timeturner.run:entrypoint"
+tt = { callable = "timeturner.run:entrypoint", extras = ["short"] }
 
 [tool.pyright]
 pythonVersion = "3.10"

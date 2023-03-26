@@ -1,5 +1,6 @@
+from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import typer
 from pydantic.json import pydantic_encoder
@@ -7,18 +8,36 @@ from rich.console import Console
 
 from timeturner import rich_output, timeturner
 from timeturner.db import DatabaseConnection
-from timeturner.settings import settings
+from timeturner.settings import TimeTurnerSettings
 
 app = typer.Typer()
 
 console = Console()
 print = console.print
+settings = TimeTurnerSettings()
+
+
+class Output(str, Enum):
+    json = "json"
+    rich = "rich"
+
+
+@app.callback()
+def callback(
+    output: Optional[Output] = None,
+):
+    global settings
+    additional_settings_args = dict()
+    if output is not None:
+        additional_settings_args["output"] = output
+    if additional_settings_args:
+        settings = TimeTurnerSettings(**additional_settings_args)
 
 
 @app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
-    data = timeturner._list(time)
+    data = timeturner._list(time, db=settings.database.connection)
     if settings.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
@@ -34,7 +53,7 @@ def add(
     # tags: str | None = None,
     # description: str | None = None,
 ):
-    data = timeturner.add(time)
+    data = timeturner.add(time, db=settings.database.connection)
     if settings.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
@@ -46,16 +65,15 @@ def add(
 def end(
     time: Optional[list[str]] = typer.Argument(None),
 ):
-    console.print_json(data=timeturner.end(time), default=pydantic_encoder)
+    data = timeturner.end(time, db=settings.database.connection)
+    console.print_json(data=data, default=pydantic_encoder)
 
 
 @app.command("i", hidden=True)
 @app.command(name="import")
 def import_(text_file: Path):
-    db = settings.database.connection
-    console.print_json(
-        data=list(timeturner.import_json(db, text_file)), default=pydantic_encoder
-    )
+    data = list(timeturner.import_json(text_file, db=settings.database.connection))
+    console.print_json(data=data, default=pydantic_encoder)
 
 
 @app.command("c", hidden=True)

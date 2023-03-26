@@ -32,7 +32,7 @@ class Sentinel:
 sentinel = Sentinel()
 
 
-class TimeSlot(BaseModel):
+class TimeSegment(BaseModel):
     start: DateTime
     end: DateTime | None = None
     passive: bool = False
@@ -76,7 +76,7 @@ class TimeSlot(BaseModel):
         return duration
 
 
-class PensiveRow(TimeSlot):
+class PensiveRow(TimeSegment):
     pk: int
 
 
