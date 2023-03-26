@@ -163,6 +163,7 @@ class DatabaseConnection:
             query,
             values,
         )
+        pk = cursor.lastrowid
         for tag in tags:
             tag_pk = self.insert_or_get_tag_pk(tag)
             cursor.execute(
@@ -170,12 +171,12 @@ class DatabaseConnection:
                 INSERT INTO {self.table_name}_tags ({self.table_name}_pk, tags_pk)
                 VALUES (?, ?)
                 """,
-                (cursor.lastrowid, cursor.lastrowid),
+                (pk, tag_pk),
             )
         self.connection.commit()
         if cursor.lastrowid is None:
             raise Exception("Failed to insert time slot into database")
-        return cast(PensiveRow, self.get_slot(cursor.lastrowid))
+        return cast(PensiveRow, self.get_slot(pk))
 
     def insert_or_get_tag_pk(self, tag: str) -> int:
         cursor = self.connection.cursor()

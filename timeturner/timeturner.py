@@ -52,3 +52,7 @@ def end(
 
 def import_text(db: DatabaseConnection, path: Path) -> Iterator[PensiveRow]:
     return loader.import_text(db, path)
+
+
+def import_json(db: DatabaseConnection, path: Path) -> Iterator[PensiveRow]:
+    return loader.import_json(db, path)

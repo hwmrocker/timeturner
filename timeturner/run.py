@@ -52,10 +52,16 @@ def end(
 @app.command("i", hidden=True)
 @app.command(name="import")
 def import_(text_file: Path):
-    db = DatabaseConnection()
+    db = settings.database.connection
     console.print_json(
-        data=timeturner.import_text(db, text_file), default=pydantic_encoder
+        data=list(timeturner.import_json(db, text_file)), default=pydantic_encoder
     )
+
+
+@app.command("c", hidden=True)
+@app.command(name="config")
+def config():
+    console.print_json(data=settings, default=pydantic_encoder)
 
 
 def entrypoint():

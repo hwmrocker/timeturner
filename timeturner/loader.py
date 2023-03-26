@@ -88,3 +88,19 @@ def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[PensiveRow]
 
     for entry in extract_time_slots(lines):
         yield db.add_slot(**entry.dict())
+
+
+def import_json(db: DatabaseConnection, json_file: Path) -> Iterator[PensiveRow]:
+    import json
+
+    with json_file.open() as f:
+        data = json.load(f)
+
+    for entry in data:
+        yield db.add_slot(
+            start=entry["start"],
+            end=entry["end"],
+            passive=entry["passive"],
+            tags=entry["tags"],
+            description=entry["description"],
+        )
