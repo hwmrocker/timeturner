@@ -134,7 +134,7 @@ TODOS by command:
 
 ### Open Questions
 
-- [ ] should the get_latest_slot return slots from the future (start_time in the future)?
+- [ ] should the get_latest_segment return segments from the future (start_time in the future)?
 
 ### Nice to have:
 - [ ] Build a minimal Docker image (maybe)

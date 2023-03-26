@@ -47,9 +47,9 @@ def pretty_duration(duration: Duration, breaks: int) -> str:
     return _pretty_duration(duration)
 
 
-def print_pretty_list(time_slots: list[PensiveRow]) -> None:
+def print_pretty_list(segments: list[PensiveRow]) -> None:
     table = Table(
-        title="Time Slots",
+        title="Segments",
         show_header=True,
         header_style="bold magenta",
         show_lines=True,
@@ -63,14 +63,14 @@ def print_pretty_list(time_slots: list[PensiveRow]) -> None:
 
     total_durations = []
 
-    for slot in time_slots:
-        actual_duration, breaks = account_for_breaks(slot.duration)
+    for segment in segments:
+        actual_duration, breaks = account_for_breaks(segment.duration)
         total_durations.append(actual_duration)
         table.add_row(
-            slot.start.format("YYYY-MM-DD HH:mm"),
-            slot.end.time().isoformat() if slot.end else "",
+            segment.start.format("YYYY-MM-DD HH:mm"),
+            segment.end.time().isoformat() if segment.end else "",
             pretty_duration(actual_duration, breaks),
-            slot.description,
+            segment.description,
         )
 
     console.print(table)
@@ -78,9 +78,9 @@ def print_pretty_list(time_slots: list[PensiveRow]) -> None:
     print(f"Total: {total_duration.total_hours():.0f}h {total_duration.minutes}m")
 
 
-def print_pretty_record(time_slot: PensiveRow | None) -> None:
-    if time_slot is None:
-        console.print("No time slot found.")
+def print_pretty_record(segment: PensiveRow | None) -> None:
+    if segment is None:
+        console.print("No segment found.")
         return
 
-    print(f"Added record with start: {time_slot.start.format('YYYY-MM-DD HH:mm')}")
+    print(f"Added record with start: {segment.start.format('YYYY-MM-DD HH:mm')}")

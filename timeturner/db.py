@@ -1,16 +1,16 @@
 """
 Here we define the database models for the time tracking application.
 
-The database is a SQLite database, we store all time slots in the pensieve table.
+The database is a SQLite database, we store all time segments in the pensieve table.
 
 It has the following columns:
 
     pk: primary key, autoincrementing integer
-    start: start time of the time slot, in ISO 8601 format
-    end: end time of the time slot, in ISO 8601 format
-    passive: whether the time slot was passive or not, boolean, default False
-    tags: tags associated with the time slot, comma separated string
-    description: description of the time slot, string
+    start: start time of the time segment, in ISO 8601 format
+    end: end time of the time segment, in ISO 8601 format
+    passive: whether the time segment was passive or not, boolean, default False
+    tags: tags associated with the time segment, comma separated string
+    description: description of the time segment, string
 
 """
 
@@ -130,7 +130,7 @@ class DatabaseConnection:
         )
         self.connection.commit()
 
-    def add_slot(
+    def add_segment(
         self,
         start: DateTime,
         end: DateTime | None = None,
@@ -138,11 +138,6 @@ class DatabaseConnection:
         tags: list[str] | None = None,
         description: str | None = None,
     ) -> PensiveRow:
-        """
-        Add a time slot to the database.
-
-        Returns the primary key of the newly created time slot.
-        """
         # fix passive if it is None
         if passive is None:
             passive = False
@@ -175,8 +170,8 @@ class DatabaseConnection:
             )
         self.connection.commit()
         if cursor.lastrowid is None:
-            raise Exception("Failed to insert time slot into database")
-        return cast(PensiveRow, self.get_slot(pk))
+            raise Exception("Failed to insert segment into database")
+        return cast(PensiveRow, self.get_segment(pk))
 
     def insert_or_get_tag_pk(self, tag: str) -> int:
         cursor = self.connection.cursor()
@@ -198,7 +193,7 @@ class DatabaseConnection:
             return cursor.lastrowid
         return result[0]
 
-    def get_tags_for_slot(self, pk: int) -> list[str]:
+    def get_tags_for_segment(self, pk: int) -> list[str]:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -210,7 +205,7 @@ class DatabaseConnection:
         )
         return [tag for tag, in cursor.fetchall()]
 
-    def update_slot(
+    def update_segment(
         self,
         pk: int,
         start: DateTime | Sentinel = sentinel,
@@ -219,9 +214,6 @@ class DatabaseConnection:
         tags: list[str] | None | Sentinel = sentinel,
         description: str | None | Sentinel = sentinel,
     ) -> None:
-        """
-        Update a time slot in the database.
-        """
         elements_to_update = []
         values_to_update = []
         if start is not sentinel:
@@ -258,7 +250,7 @@ class DatabaseConnection:
         if tags is not sentinel:
             if tags is None:
                 tags = []
-            stored_tags = set(self.get_tags_for_slot(pk))
+            stored_tags = set(self.get_tags_for_segment(pk))
             tags_to_insert = set(tags) - stored_tags
             for tag in tags_to_insert:
                 tag_pk = self.insert_or_get_tag_pk(tag)
@@ -301,10 +293,7 @@ class DatabaseConnection:
 
         self.connection.commit()
 
-    def get_latest_slot(self) -> PensiveRow | None:
-        """
-        get the latest time slot from the database according to the start time.
-        """
+    def get_latest_segment(self) -> PensiveRow | None:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -324,11 +313,11 @@ class DatabaseConnection:
             start=start,
             end=end,
             passive=passive,
-            tags=self.get_tags_for_slot(pk),
+            tags=self.get_tags_for_segment(pk),
             description=description,
         )
 
-    def delete_slot(self, pk: int) -> None:
+    def delete_segment(self, pk: int) -> None:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -338,7 +327,7 @@ class DatabaseConnection:
         )
         self.connection.commit()
 
-    def get_slot(self, pk: int) -> PensiveRow | None:
+    def get_segment(self, pk: int) -> PensiveRow | None:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -359,19 +348,19 @@ class DatabaseConnection:
             start=start,
             end=end,
             passive=passive,
-            tags=self.get_tags_for_slot(pk),
+            tags=self.get_tags_for_segment(pk),
             description=description,
         )
 
-    def get_slots_between(
+    def get_segments_between(
         self,
         start: DateTime,
         end: DateTime,
     ) -> list[PensiveRow]:
         """
-        Get all time slots between the given start and end times.
+        Get all segments between the given start and end times.
 
-        This includes slots that start before the given start time and / or end after
+        This includes segments that start before the given start time and / or end after
         the given end time.
         """
         cursor = self.connection.cursor()
@@ -392,13 +381,13 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
-                tags=self.get_tags_for_slot(pk),
+                tags=self.get_tags_for_segment(pk),
                 description=description,
             )
             for pk, start, end, passive, description in rows
         ]
 
-    def get_all_slots(self) -> list[PensiveRow]:
+    def get_all_segments(self) -> list[PensiveRow]:
         cursor = self.connection.cursor()
 
         cursor.execute(
@@ -414,7 +403,7 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
-                tags=self.get_tags_for_slot(pk),
+                tags=self.get_tags_for_segment(pk),
                 description=description,
             )
             for pk, start, end, passive, description in rows

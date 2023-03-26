@@ -10,29 +10,29 @@ from timeturner.db import DatabaseConnection, PensiveRow, TimeSegment
 re_date = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
-def extract_time_slots(lines: list[str]) -> Iterator[TimeSegment]:
-    time_slot = None
+def extract_segments(lines: list[str]) -> Iterator[TimeSegment]:
+    segment = None
     for line in lines:
         line = line.strip()
 
         if line[0].isdigit():
-            # this is a new time slot
-            if time_slot is not None:
-                yield time_slot
+            # this is a new segment
+            if segment is not None:
+                yield segment
         elif line[0] == "#":
-            # this is a continuation of the previous time slot
-            if time_slot is None:  # pragma: no cover
-                raise ValueError("Continuation without time slot")
-            time_slot.tags = [e[1:].strip() for e in line.split(",")]
+            # this is a continuation of the previous segment
+            if segment is None:  # pragma: no cover
+                raise ValueError("Continuation without segment")
+            segment.tags = [e[1:].strip() for e in line.split(",")]
             continue
         else:
-            # this is a continuation of the previous time slot
-            if time_slot is None:  # pragma: no cover
-                raise ValueError("Continuation without time slot")
-            if time_slot.description is None:  # pragma: no cover
-                time_slot.description = line
+            # this is a continuation of the previous segment
+            if segment is None:  # pragma: no cover
+                raise ValueError("Continuation without segment")
+            if segment.description is None:  # pragma: no cover
+                segment.description = line
             else:
-                time_slot.description += f"\n{line}"
+                segment.description += f"\n{line}"
             continue
 
         # split the line into columns
@@ -56,7 +56,7 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSegment]:
 
         # build the TimeSegment object
 
-        time_slot = TimeSegment(
+        segment = TimeSegment(
             start=start,
             end=end,
             passive=category == "travel",
@@ -64,8 +64,8 @@ def extract_time_slots(lines: list[str]) -> Iterator[TimeSegment]:
             description=f"{category}@{activity}",
         )
 
-    if time_slot is not None:
-        yield time_slot
+    if segment is not None:
+        yield segment
 
 
 def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[PensiveRow]:
@@ -86,8 +86,8 @@ def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[PensiveRow]
     # remove the footer
     lines = lines[: lines.index(table_separator)]
 
-    for entry in extract_time_slots(lines):
-        yield db.add_slot(**entry.dict())
+    for entry in extract_segments(lines):
+        yield db.add_segment(**entry.dict())
 
 
 def import_json(db: DatabaseConnection, json_file: Path) -> Iterator[PensiveRow]:
@@ -97,7 +97,7 @@ def import_json(db: DatabaseConnection, json_file: Path) -> Iterator[PensiveRow]
         data = json.load(f)
 
     for entry in data:
-        yield db.add_slot(
+        yield db.add_segment(
             start=entry["start"],
             end=entry["end"],
             passive=entry["passive"],
