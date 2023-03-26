@@ -4,6 +4,7 @@ from rich.console import Console
 from rich.table import Table
 
 from timeturner.db import PensiveRow
+from timeturner.timeturner import SegmentsByDay
 
 console = Console()
 
@@ -47,7 +48,7 @@ def pretty_duration(duration: Duration, breaks: int) -> str:
     return _pretty_duration(duration)
 
 
-def print_pretty_list(segments: list[PensiveRow]) -> None:
+def segments_by_day(segments: list[SegmentsByDay]) -> None:
     table = Table(
         title="Segments",
         show_header=True,

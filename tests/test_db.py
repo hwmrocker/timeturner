@@ -90,7 +90,7 @@ def test_get_latest_segment(db: DatabaseConnection, db_entries, latest_pk):
         start=latest_date,
         end=None,
         passive=False,
-        tags=None,
+        tags=[],
         description=None,
     )
 
@@ -127,7 +127,7 @@ def test_add_segment_and_get_latest(db: DatabaseConnection, elements, expected_r
         start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
         end=expected_row.get("end"),
         passive=expected_row.get("passive", False),
-        tags=expected_row.get("tags"),
+        tags=expected_row.get("tags", []),
         description=expected_row.get("description"),
     )
     latest_segment = db.get_latest_segment()
@@ -184,7 +184,7 @@ UPDATE_SEGMENTS_TEST_CASES = [
         dict(
             end=None,
             passive=None,
-            tags=None,
+            tags=[],
             description=None,
         ),
         PensiveRow(
@@ -192,7 +192,7 @@ UPDATE_SEGMENTS_TEST_CASES = [
             start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
             end=None,
             passive=False,
-            tags=None,
+            tags=[],
             description=None,
         ),
         id="delete all optional fields",

@@ -41,7 +41,7 @@ def _list(time: Optional[list[str]] = typer.Argument(None)):
     if settings.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
-        rich_output.print_pretty_list(data)
+        rich_output.segments_by_day(data)
 
 
 @app.command("a", hidden=True)

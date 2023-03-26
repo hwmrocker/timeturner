@@ -60,7 +60,7 @@ def extract_segments(lines: list[str]) -> Iterator[TimeSegment]:
             start=start,
             end=end,
             passive=category == "travel",
-            tags=None,
+            tags=[],
             description=f"{category}@{activity}",
         )
 

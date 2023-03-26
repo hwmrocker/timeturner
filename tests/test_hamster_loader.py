@@ -20,7 +20,7 @@ SINGLE_TIME_SEGMENT_DATA = [
             TimeSegment(
                 start=parse("2023-01-02 08:30"),
                 end=parse("2023-01-02 09:00"),
-                tags=None,
+                tags=[],
                 description="setup@install system",
                 passive=False,
             )
@@ -51,7 +51,7 @@ SINGLE_TIME_SEGMENT_DATA = [
             TimeSegment(
                 start=parse("2023-01-02 13:30"),
                 end=parse("2023-01-02 15:00"),
-                tags=None,
+                tags=[],
                 description="setup@setup\ndocker, hr",
                 passive=False,
             )
@@ -64,7 +64,7 @@ SINGLE_TIME_SEGMENT_DATA = [
             TimeSegment(
                 start=parse("2023-02-16 23:15"),
                 end=parse("2023-02-17 07:45"),
-                tags=None,
+                tags=[],
                 description="travel@",
                 passive=True,
             ),

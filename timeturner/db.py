@@ -36,7 +36,7 @@ class TimeSegment(BaseModel):
     start: DateTime
     end: DateTime | None = None
     passive: bool = False
-    tags: list[str] | None = None
+    tags: list[str] = []
     description: str | None = None
 
     @validator("start")
@@ -58,7 +58,8 @@ class TimeSegment(BaseModel):
 
     @validator("tags")
     def parse_tags(cls, value: str | list[str] | None) -> list[str] | None:
-        if value is None:
+        if not value:
+            # we want to return a new empty list, not reuse the default empty list
             return []
         if isinstance(value, str):
             return value.split(",")
