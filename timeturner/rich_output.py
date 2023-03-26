@@ -29,22 +29,9 @@ def _pretty_duration(duration: Duration) -> str:
     return str(" ".join(parts))
 
 
-def account_for_breaks(duration: Duration) -> tuple[Duration, int]:
-    # Nach 4h Arbeitszeit: 15 Minuten
-    # Nach 6:15h Arbeitszeit: weitere 30 Minuten.
-    if duration.total_minutes() > (6 * 60 + 15):
-        duration_without_breaks = duration - Duration(minutes=45)
-        return duration_without_breaks, 45
-
-    elif duration.total_minutes() > (4 * 60):
-        duration_without_breaks = duration - Duration(minutes=15)
-        return duration_without_breaks, 15
-    return duration, 0
-
-
-def pretty_duration(duration: Duration, breaks: int) -> str:
+def pretty_duration(duration: Duration, breaks: Duration) -> str:
     if breaks:
-        return f"{_pretty_duration(duration)} (+{breaks}m break)"
+        return f"{_pretty_duration(duration)} (+{_pretty_duration(breaks)} break)"
     return _pretty_duration(duration)
 
 
@@ -60,18 +47,19 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
     table.add_column("Start", style="dim", width=20)
     table.add_column("End", style="dim", width=20)
     table.add_column("Duration", style="dim", width=20)
-    table.add_column("Description", style="dim", width=20)
 
     total_durations = []
 
     for segment in segments:
-        actual_duration, breaks = account_for_breaks(segment.duration)
-        total_durations.append(actual_duration)
+        total_durations.append(segment.summary.work_time)
+        if segment.summary.start:
+            start_str = f"{segment.day} {segment.summary.start.format('HH:mm')}"
+        else:
+            start_str = f"{segment.day}"
         table.add_row(
-            segment.start.format("YYYY-MM-DD HH:mm"),
-            segment.end.time().isoformat() if segment.end else "",
-            pretty_duration(actual_duration, breaks),
-            segment.description,
+            start_str,
+            segment.summary.end.format("HH:mm") if segment.summary.end else "",
+            pretty_duration(segment.summary.work_time, segment.summary.break_time),
         )
 
     console.print(table)

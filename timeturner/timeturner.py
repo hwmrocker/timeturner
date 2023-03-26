@@ -1,10 +1,11 @@
 from itertools import groupby
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 
 from pendulum import period
 from pendulum.date import Date
 from pendulum.duration import Duration
+from pendulum.time import Time
 from pydantic import BaseModel
 
 from timeturner import loader
@@ -16,6 +17,8 @@ from timeturner.tools.boltons_iterutils import pairwise_iter
 class DailySummary(BaseModel):
     work_time: Duration
     break_time: Duration
+    start: Optional[Time]
+    end: Optional[Time]
     by_tag: dict[str, Duration]
 
 
@@ -29,15 +32,21 @@ class SegmentsByDay(BaseModel):
 def get_summary(segments: list[PensiveRow]) -> DailySummary:
     work_time = Duration()
     break_time = Duration()
-
+    start = None
+    end = None
     by_tag = {}
+    segment = None
     for segment in segments:
+        if start is None:
+            start = segment.start.time()
         work_time += segment.duration
         for tag in segment.tags:
             if tag not in by_tag:
                 by_tag[tag] = Duration()
             by_tag[tag] += segment.duration
 
+    if segment and segment.end is not None:
+        end = segment.end.time()
     for segment, next_segment in pairwise_iter(segments):
         if segment.end is None:
             continue
@@ -59,6 +68,8 @@ def get_summary(segments: list[PensiveRow]) -> DailySummary:
     return DailySummary(
         work_time=work_time,
         break_time=break_time,
+        start=start,
+        end=end,
         by_tag=by_tag,
     )
 
