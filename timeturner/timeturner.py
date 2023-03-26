@@ -2,18 +2,65 @@ from itertools import groupby
 from pathlib import Path
 from typing import Iterator
 
+from pendulum import period
 from pendulum.date import Date
+from pendulum.duration import Duration
 from pydantic import BaseModel
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
 from timeturner.parser import parse_args, parse_list_args
+from timeturner.tools.boltons_iterutils import pairwise_iter
+
+
+class DailySummary(BaseModel):
+    work_time: Duration
+    break_time: Duration
+    by_tag: dict[str, Duration]
 
 
 class SegmentsByDay(BaseModel):
     day: Date
     weekday: int
     segments: list[PensiveRow]
+    summary: DailySummary
+
+
+def get_summary(segments: list[PensiveRow]) -> DailySummary:
+    work_time = Duration()
+    break_time = Duration()
+
+    by_tag = {}
+    for segment in segments:
+        work_time += segment.duration
+        for tag in segment.tags:
+            if tag not in by_tag:
+                by_tag[tag] = Duration()
+            by_tag[tag] += segment.duration
+
+    for segment, next_segment in pairwise_iter(segments):
+        if segment.end is None:
+            continue
+        new_break = next_segment.start - segment.end
+        if new_break >= Duration(minutes=1):
+            break_time += new_break
+
+    if work_time > Duration(hours=6, minutes=15):
+        if break_time < Duration(minutes=45):
+            missing_break_time = Duration(minutes=45) - break_time
+            work_time -= missing_break_time
+            break_time += missing_break_time
+    elif work_time > Duration(hours=4):
+        if break_time < Duration(minutes=15):
+            missing_break_time = Duration(minutes=15) - break_time
+            work_time -= missing_break_time
+            break_time += missing_break_time
+
+    return DailySummary(
+        work_time=work_time,
+        break_time=break_time,
+        by_tag=by_tag,
+    )
 
 
 def group_by_day(rows: list[PensiveRow]) -> dict[Date, list[PensiveRow]]:
@@ -24,20 +71,29 @@ def _list(
     time: list[str] | None,
     *,
     db: DatabaseConnection,
-) -> list[PensiveRow]:
+) -> list[SegmentsByDay]:
     if time is None:
         time = []
     segments_per_day = {}
     start, end = parse_list_args(time)
-    for day in (end - start).range("days"):
-        segments_per_day[day.date()] = []
+    request_period = period(start, end)
+    for day in request_period.range("days"):
+        segments_per_day[str(day.date())] = []
     rows = db.get_segments_between(start, end)
     for day, segments in groupby(rows, lambda r: r.start.date()):
-        segments_per_day[day] = list(segments)
-    return [
-        dict(day=d, weekday=d.weekday(), segments=s)
-        for d, s in segments_per_day.items()
-    ]
+        segments_per_day[str(day)] = list(segments)
+    daily_segments = []
+    for day in request_period.range("days"):
+        segments = segments_per_day[str(day.date())]
+        daily_segments.append(
+            SegmentsByDay(
+                day=day,
+                weekday=day.weekday(),
+                segments=segments,
+                summary=get_summary(segments),
+            )
+        )
+    return daily_segments
 
 
 def add(
