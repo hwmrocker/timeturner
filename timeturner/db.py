@@ -159,6 +159,8 @@ class DatabaseConnection:
             query,
             values,
         )
+        if cursor.lastrowid is None:
+            raise Exception("Failed to insert segment into database")
         pk = cursor.lastrowid
         for tag in tags:
             tag_pk = self.insert_or_get_tag_pk(tag)
@@ -169,9 +171,9 @@ class DatabaseConnection:
                 """,
                 (pk, tag_pk),
             )
+            if cursor.lastrowid is None:
+                raise Exception("Failed to insert tag into database")
         self.connection.commit()
-        if cursor.lastrowid is None:
-            raise Exception("Failed to insert segment into database")
         return cast(PensiveRow, self.get_segment(pk))
 
     def insert_or_get_tag_pk(self, tag: str) -> int:
@@ -190,6 +192,8 @@ class DatabaseConnection:
                 """,
                 (tag,),
             )
+            if cursor.lastrowid is None:
+                raise Exception("Failed to insert tag into database")
             self.connection.commit()
             return cursor.lastrowid
         return result[0]
@@ -251,6 +255,9 @@ class DatabaseConnection:
         if tags is not sentinel:
             if tags is None:
                 tags = []
+            else:
+                if not isinstance(tags, list):
+                    raise ValueError("tags must be a list, None, or not set")
             stored_tags = set(self.get_tags_for_segment(pk))
             tags_to_insert = set(tags) - stored_tags
             for tag in tags_to_insert:

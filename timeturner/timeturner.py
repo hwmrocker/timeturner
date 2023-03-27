@@ -1,9 +1,10 @@
 from itertools import groupby
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator, Optional, cast
 
 from pendulum import period
 from pendulum.date import Date
+from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 from pendulum.time import Time
 from pydantic import BaseModel
@@ -50,7 +51,7 @@ def get_summary(segments: list[PensiveRow]) -> DailySummary:
     for segment, next_segment in pairwise_iter(segments):
         if segment.end is None:
             continue
-        new_break = next_segment.start - segment.end
+        new_break = cast(Duration, next_segment.start - segment.end)
         if new_break >= Duration(minutes=1):
             break_time += new_break
 
@@ -89,12 +90,14 @@ def _list(
     start, end = parse_list_args(time)
     request_period = period(start, end)
     for day in request_period.range("days"):
+        day = cast(DateTime, day)
         segments_per_day[str(day.date())] = []
     rows = db.get_segments_between(start, end)
     for day, segments in groupby(rows, lambda r: r.start.date()):
         segments_per_day[str(day)] = list(segments)
     daily_segments = []
     for day in request_period.range("days"):
+        day = cast(DateTime, day)
         segments = segments_per_day[str(day.date())]
         daily_segments.append(
             SegmentsByDay(
