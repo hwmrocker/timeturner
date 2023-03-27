@@ -2,7 +2,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import Iterator, Optional, cast
 
-from pendulum import period
+from pendulum import now, period
 from pendulum.date import Date
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
@@ -16,11 +16,11 @@ from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
 class DailySummary(BaseModel):
-    work_time: Duration
-    break_time: Duration
-    start: Optional[Time]
-    end: Optional[Time]
-    by_tag: dict[str, Duration]
+    work_time: Duration = Duration()
+    break_time: Duration = Duration()
+    start: Optional[Time] = None
+    end: Optional[Time] = None
+    by_tag: dict[str, Duration] = {}
 
 
 class SegmentsByDay(BaseModel):
@@ -30,7 +30,12 @@ class SegmentsByDay(BaseModel):
     summary: DailySummary
 
 
-def get_summary(segments: list[PensiveRow]) -> DailySummary:
+def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:
+    """
+    Expecting segments to be sorted by start time.
+    All segments should be on the same day.
+    No segments should overlap.
+    """
     work_time = Duration()
     break_time = Duration()
     start = None
@@ -50,10 +55,15 @@ def get_summary(segments: list[PensiveRow]) -> DailySummary:
         end = segment.end.time()
     for segment, next_segment in pairwise_iter(segments):
         if segment.end is None:
-            continue
+            raise ValueError(
+                "Segment has no end time but is followed by another segment."
+            )
         new_break = cast(Duration, next_segment.start - segment.end)
-        if new_break >= Duration(minutes=1):
+        if new_break > Duration(minutes=1):
             break_time += new_break
+        else:
+            # Short breaks are not counted as breaks.
+            work_time += new_break
 
     if work_time > Duration(hours=6, minutes=15):
         if break_time < Duration(minutes=45):
@@ -104,7 +114,7 @@ def _list(
                 day=day,
                 weekday=day.weekday(),
                 segments=segments,
-                summary=get_summary(segments),
+                summary=get_daily_summary(segments),
             )
         )
     return daily_segments
