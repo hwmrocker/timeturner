@@ -84,6 +84,7 @@ def test_get_latest_segment(db: DatabaseConnection, db_entries, latest_pk):
         print(f"Added {entry} with pk {pk}")
     row = db.get_latest_segment()
     latest_date = sorted(db_entries)[-1]
+    assert row
     assert row.pk == latest_pk
     assert row == PensiveRow(
         pk=latest_pk,
