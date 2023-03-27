@@ -22,7 +22,7 @@ class Output(str, Enum):
     rich = "rich"
 
 
-@app.callback()
+@app.callback(no_args_is_help=True)
 def callback(
     output: Optional[Output] = None,
 ):

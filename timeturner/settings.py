@@ -47,6 +47,7 @@ class DatabaseSettings(BaseModel):
 
     @property
     def connection(self) -> DatabaseConnection:
+        self.home.mkdir(parents=True, exist_ok=True)
         return DatabaseConnection(
             str(self.database_path.resolve()),
             table_name=self.table_name,
