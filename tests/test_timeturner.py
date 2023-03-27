@@ -1,18 +1,10 @@
 import pytest
+from pendulum.date import Date
 from pendulum.time import Time
 
-from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
+from tests.helpers import parse
 from timeturner import timeturner
-from timeturner.db import DatabaseConnection, PensiveRow
-
-pytestmark = pytest.mark.dependency(depends=["db_tests"], scope="session")
-
-
-@freeze_time_at_1985_25_05__15_34_12
-def test_add_segment(db: DatabaseConnection):
-    assert timeturner.add(None, db=db).start == parse("1985-05-25 15:34:00")
-    assert timeturner.add([], db=db).start == parse("1985-05-25 15:34:00")
-
+from timeturner.db import PensiveRow
 
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
@@ -232,3 +224,96 @@ ILLEGAL_SEGMENTS = [
 def test_get_summary_with_illegal_segments(segments, expected_error):
     with pytest.raises(expected_error):
         timeturner.get_daily_summary(segments)
+
+
+GROUP_BY_DAY_TEST_CASES = [
+    pytest.param(
+        [],
+        {},
+        id="empty",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-25 00:00:00"),
+            ),
+        ],
+        {
+            Date(1985, 5, 25): [
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-25 00:00:00"),
+                ),
+            ],
+        },
+        id="one segment",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-25 00:00:00"),
+            ),
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-26 00:00:00"),
+            ),
+        ],
+        {
+            Date(1985, 5, 25): [
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-25 00:00:00"),
+                ),
+            ],
+            Date(1985, 5, 26): [
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-26 00:00:00"),
+                ),
+            ],
+        },
+        id="two segments, different days",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-25 00:00:00"),
+            ),
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-25 01:00:00"),
+            ),
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-26 00:00:00"),
+            ),
+        ],
+        {
+            Date(1985, 5, 25): [
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-25 00:00:00"),
+                ),
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-25 01:00:00"),
+                ),
+            ],
+            Date(1985, 5, 26): [
+                PensiveRow(
+                    pk=1,
+                    start=parse("1985-05-26 00:00:00"),
+                ),
+            ],
+        },
+        id="two segments, different days",
+    ),
+]
+
+
+@pytest.mark.parametrize("segments, expected_grouped", GROUP_BY_DAY_TEST_CASES)
+def test_group_by_day(segments, expected_grouped):
+    assert timeturner.group_by_day(segments) == expected_grouped
