@@ -112,7 +112,7 @@ class DatabaseConnection:
             """
         )
         cursor.execute(
-            f"""
+            """
             CREATE TABLE IF NOT EXISTS tags (
                 pk INTEGER PRIMARY KEY AUTOINCREMENT,
                 tag TEXT
@@ -276,7 +276,8 @@ class DatabaseConnection:
                 cursor.execute(
                     f"""
                     SELECT COUNT(*) FROM tags
-                    INNER JOIN {self.table_name}_tags ON tags.pk = {self.table_name}_tags.tags_pk
+                    INNER JOIN {self.table_name}_tags
+                        ON tags.pk = {self.table_name}_tags.tags_pk
                     WHERE tags.tag = ?
                     """,
                     (tag,),

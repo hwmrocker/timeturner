@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+
+* calling timeturner with no arguments will now print help
+
 ## 0.1.1 (2023-03-27)
 
 * fix: create home directory of database file if it does not exist

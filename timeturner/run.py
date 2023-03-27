@@ -1,13 +1,12 @@
 from enum import Enum
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 import typer
 from pydantic.json import pydantic_encoder
 from rich.console import Console
 
 from timeturner import rich_output, timeturner
-from timeturner.db import DatabaseConnection
 from timeturner.settings import TimeTurnerSettings
 
 app = typer.Typer()
