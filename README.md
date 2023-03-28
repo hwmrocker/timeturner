@@ -103,11 +103,9 @@ TODOs:
 TODOS by command:
 
 - [ ] add
-  - [ ] auto close activities that are still open
-  - [ ] break up activities when a activity is inserted in the middle
   - [ ] allow passive activities
   - [ ] allow sick days
-  - [ ] add tests
+  - [ ] handle new records that collide with previous excisting records
 - [ ] end
   - [ ] add tests
 
@@ -121,6 +119,7 @@ TODOS by command:
   - [ ] group by year, month, week, day
   - [ ] add tests
 
+- [ ] undo (revert the last change)
 ### Design Goals
 
 - minimalistic, little to type

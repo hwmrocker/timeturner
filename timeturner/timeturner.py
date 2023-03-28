@@ -2,7 +2,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import Iterator, Optional, cast
 
-from pendulum import now, period
+from pendulum import period
 from pendulum.date import Date
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
@@ -128,6 +128,36 @@ def add(
     if time is None:
         time = []
     start, end = parse_args(time)
+    current_segment = db.get_latest_segment()
+
+    if current_segment is not None:
+        # TODO: return a warning that other segments were changed
+        if start < current_segment.start:
+            if end and end > current_segment.start:
+                if current_segment.end and end < current_segment.end:
+                    db.update_segment(current_segment.pk, start=end)
+                elif current_segment.end and end >= current_segment.end:
+                    db.delete_segment(current_segment.pk)
+                else:
+                    db.update_segment(current_segment.pk, start=end)
+            elif end is None:
+                end = current_segment.start
+        elif current_segment.end is None:
+            db.update_segment(current_segment.pk, end=start)
+        elif end and start > current_segment.start and end < current_segment.end:
+            db.update_segment(current_segment.pk, end=start)
+            ret = db.add_segment(start, end)
+            db.add_segment(
+                end,
+                current_segment.end,
+                tags=current_segment.tags,
+                description=current_segment.description,
+                passive=current_segment.passive,
+            )
+            return ret
+        elif start < current_segment.end and start > current_segment.start:
+            db.update_segment(current_segment.pk, end=start)
+
     return db.add_segment(start, end)
 
 

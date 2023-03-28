@@ -1,6 +1,5 @@
 import pytest
 from pendulum.date import Date
-from pendulum.duration import Duration
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
 from timeturner import timeturner
@@ -8,11 +7,106 @@ from timeturner.db import DatabaseConnection
 
 pytestmark = pytest.mark.dependency(depends=["db_tests"], scope="session")
 
+ADD_TEST_CASES = [
+    pytest.param(
+        [[]],
+        [(parse("1985-05-25 15:34:00"), None)],
+        id="no time args",
+    ),
+    pytest.param(
+        [None],
+        [(parse("1985-05-25 15:34:00"), None)],
+        id="None time args",
+    ),
+    pytest.param(
+        [["9:00", "-", "+3h"]],
+        [(parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"))],
+        id="start with end",
+    ),
+    pytest.param(
+        [["9:00", "-", "+3h"], []],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00")),
+            (parse("1985-05-25 15:34:00"), None),
+        ],
+        id="2nd segment",
+    ),
+    pytest.param(
+        [["9:00"], []],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 15:34:00")),
+            (parse("1985-05-25 15:34:00"), None),
+        ],
+        id="auto end previous segment",
+    ),
+    pytest.param(
+        [["9:00", "-", "+3h"], ["11:00"]],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 11:00:00")),
+            (parse("1985-05-25 11:00:00"), None),
+        ],
+        id="move previous end",
+    ),
+    pytest.param(
+        [["9:00"], ["8:00"]],
+        [
+            (parse("1985-05-25 09:00:00"), None),
+            (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:00:00")),
+        ],
+        id="auto end segment that happened before",
+    ),
+    pytest.param(
+        [["9:00"], ["8:00", "-", "9:30"]],
+        [
+            (parse("1985-05-25 09:30:00"), None),
+            (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:30:00")),
+        ],
+        id="move start from next segment",
+    ),
+    pytest.param(
+        [["9:00", "-", "10:00"], ["8:00", "-", "9:30"]],
+        [
+            (parse("1985-05-25 09:30:00"), parse("1985-05-25 10:00:00")),
+            (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:30:00")),
+        ],
+        id="move start from next segment",
+    ),
+    pytest.param(
+        [["9:00", "-", "9:15"], ["8:00", "-", "9:30"]],
+        [
+            (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:30:00")),
+        ],
+        id="new segment fully overlaps previous",
+    ),
+    pytest.param(
+        [["9:00", "-", "10:00"], ["8:00", "-", "8:30"]],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 10:00:00")),
+            (parse("1985-05-25 08:00:00"), parse("1985-05-25 08:30:00")),
+        ],
+        id="add segment before",
+    ),
+    pytest.param(
+        [["9:00", "-", "10:00"], ["9:15", "-", "9:30"]],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 09:15:00")),
+            (parse("1985-05-25 09:15:00"), parse("1985-05-25 09:30:00")),
+            (parse("1985-05-25 09:30:00"), parse("1985-05-25 10:00:00")),
+        ],
+        id="new segment in middle of previous",
+    ),
+]
 
+
+@pytest.mark.parametrize("args_list, expected_start_end_times", ADD_TEST_CASES)
 @freeze_time_at_1985_25_05__15_34_12
-def test_add_segment(db: DatabaseConnection):
-    assert timeturner.add(None, db=db).start == parse("1985-05-25 15:34:00")
-    assert timeturner.add([], db=db).start == parse("1985-05-25 15:34:00")
+def test_add_segment(db: DatabaseConnection, args_list, expected_start_end_times):
+    for args in args_list:
+        timeturner.add(args, db=db)
+    all_segments = db.get_all_segments()
+    start_and_end_times = [(segment.start, segment.end) for segment in all_segments]
+    print(start_and_end_times)
+    assert sorted(start_and_end_times) == sorted(expected_start_end_times)
 
 
 LIST_SEGMENTS_TESTS = [
