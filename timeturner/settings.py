@@ -5,6 +5,7 @@ from typing import Any, Literal
 import tomlkit
 from pydantic import BaseModel, BaseSettings
 
+from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
 
 DEFAULT_CONFIG_HOME = (
@@ -57,6 +58,9 @@ class DatabaseSettings(BaseModel):
 class TimeTurnerSettings(Settings):
     database: DatabaseSettings = DatabaseSettings()
     output: Literal["json", "rich"] = "rich"
+
+    version: str = __VERSION__
+    commit: str = __COMMIT__
 
     class Config:
         env_file_encoding = "utf-8"
