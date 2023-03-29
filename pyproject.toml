@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "timeturner"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Olaf Gladis <olaf@gladis.org>"]
 readme = "README.md"

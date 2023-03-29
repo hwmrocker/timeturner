@@ -2,6 +2,8 @@
 
 ## unreleased
 
+## 0.1.2 (2023-03-29)
+
 * calling timeturner with no arguments will now print help
 * adding new activities will end the current activity
 * when adding a new activity that starts before the current activity, the current activity will be ended
