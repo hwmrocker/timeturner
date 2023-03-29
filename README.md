@@ -105,7 +105,6 @@ TODOS by command:
 - [ ] add
   - [ ] allow passive activities
   - [ ] allow sick days
-  - [ ] handle new records that collide with previous excisting records
 - [ ] end
   - [ ] add tests
 

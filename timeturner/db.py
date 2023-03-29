@@ -16,7 +16,7 @@ It has the following columns:
 
 import sqlite3
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 import pendulum
 from pendulum.datetime import DateTime
@@ -364,7 +364,7 @@ class DatabaseConnection:
     def get_segments_between(
         self,
         start: DateTime,
-        end: DateTime,
+        end: Optional[DateTime] = None,
     ) -> list[PensiveRow]:
         """
         Get all segments between the given start and end times.
@@ -373,7 +373,9 @@ class DatabaseConnection:
         the given end time.
         """
         cursor = self.connection.cursor()
-
+        end_is_none = end is None
+        if end is None:
+            end = start
         cursor.execute(
             f"""
             SELECT pk, start, end, passive, description FROM {self.table_name}
@@ -384,7 +386,7 @@ class DatabaseConnection:
         )
 
         rows = cursor.fetchall()
-        return [
+        collected_rows = [
             PensiveRow(
                 pk=pk,
                 start=start,
@@ -395,6 +397,32 @@ class DatabaseConnection:
             )
             for pk, start, end, passive, description in rows
         ]
+
+        if end_is_none:
+            # if end was not given, we want to include the first segment that starts
+            # after the given start time
+            cursor.execute(
+                f"""
+                SELECT pk, start, end, passive, description FROM {self.table_name}
+                WHERE start > ?
+                ORDER BY start ASC LIMIT 1
+                """,
+                (str(start),),
+            )
+            row = cursor.fetchone()
+            if row is not None:
+                pk, start, end, passive, description = row
+                collected_rows.append(
+                    PensiveRow(
+                        pk=pk,
+                        start=start,
+                        end=end,
+                        passive=passive,
+                        tags=self.get_tags_for_segment(pk),
+                        description=description,
+                    )
+                )
+        return collected_rows
 
     def get_all_segments(self) -> list[PensiveRow]:
         cursor = self.connection.cursor()
