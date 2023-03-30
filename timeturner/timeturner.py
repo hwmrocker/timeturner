@@ -89,6 +89,38 @@ def group_by_day(rows: list[PensiveRow]) -> dict[Date, list[PensiveRow]]:
     return {k: list(v) for k, v in groupby(rows, lambda r: r.start.date())}
 
 
+def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
+    for row in rows:
+        if row.end and row.end.date() == row.start.date():
+            yield row
+        elif not row.end:
+            yield row
+        else:
+            yield PensiveRow(
+                pk=row.pk,
+                start=row.start,
+                end=row.start.end_of("day"),
+                tags=row.tags,
+                description=row.description,
+                passive=row.passive,
+            )
+            for day in period(row.start.date().add(days=1), row.end.date()).range(
+                "days"
+            ):
+                if day == row.end.date():
+                    end = row.end
+                else:
+                    end = day.end_of("day")
+                yield PensiveRow(
+                    pk=row.pk,
+                    start=day.start_of("day"),
+                    end=end,
+                    tags=row.tags,
+                    description=row.description,
+                    passive=row.passive,
+                )
+
+
 def _list(
     time: list[str] | None,
     *,
@@ -103,7 +135,8 @@ def _list(
         day = cast(DateTime, day)
         segments_per_day[str(day.date())] = []
     rows = db.get_segments_between(start, end)
-    for day, segments in groupby(rows, lambda r: r.start.date()):
+    midnight_devided_segments = list(split_segments_at_midnight(rows))
+    for day, segments in groupby(midnight_devided_segments, lambda r: r.start.date()):
         segments_per_day[str(day)] = list(segments)
     daily_segments = []
     for day in request_period.range("days"):
