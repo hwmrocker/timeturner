@@ -1,7 +1,7 @@
 import pytest
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
-from timeturner import parser
+from timeturner import models, parser
 
 # tz_offset = pendulum.now().offset_hours
 
@@ -128,29 +128,54 @@ def test_single_time_parse_with_bad_input():
 
 
 PARSE_ADD_ARGS_EXAMPLES = [
-    pytest.param([], False, (parse("1985-05-25 15:34:00"), None), id="no args"),
+    pytest.param(
+        [],
+        False,
+        models.NewSegmentParams(
+            start=parse("1985-05-25 15:34:00"),
+            end=None,
+            tags=[],
+        ),
+        id="no args",
+    ),
     pytest.param(
         [],
         True,
-        (parse("1985-05-25 00:00:00"), parse("1985-05-25 00:00:00").end_of("day")),
+        models.NewSegmentParams(
+            start=parse("1985-05-25 00:00:00"),
+            end=parse("1985-05-25 00:00:00").end_of("day"),
+            tags=[],
+        ),
         id="no args, prefer full days",
     ),
     pytest.param(
         ["-2d", "-", "+1d"],
         True,
-        (parse("1985-05-23 00:00:00"), parse("1985-05-24 00:00:00").end_of("day")),
+        models.NewSegmentParams(
+            start=parse("1985-05-23 00:00:00"),
+            end=parse("1985-05-24 00:00:00").end_of("day"),
+            tags=[],
+        ),
         id="no args, prefer full days",
     ),
     pytest.param(
         ["23", "07:00", "-", "19:00"],
         False,
-        (parse("1985-05-23 07:00:00"), parse("1985-05-23 19:00:00")),
+        models.NewSegmentParams(
+            start=parse("1985-05-23 07:00:00"),
+            end=parse("1985-05-23 19:00:00"),
+            tags=[],
+        ),
         id="two days in the past",
     ),
     pytest.param(
         ["23", "07:00", "-", "+4h"],
         False,
-        (parse("1985-05-23 07:00:00"), parse("1985-05-23 11:00:00")),
+        models.NewSegmentParams(
+            start=parse("1985-05-23 07:00:00"),
+            end=parse("1985-05-23 11:00:00"),
+            tags=[],
+        ),
         id="two days in the past, with delta",
     ),
 ]

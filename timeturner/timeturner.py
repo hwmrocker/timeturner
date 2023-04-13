@@ -143,19 +143,16 @@ def add(
     holiday: bool = False,
     db: DatabaseConnection,
 ) -> PensiveRow:
-    tags = []
     prefer_full_days = False
     now = DateTime.now()
 
-    if holiday:
-        tags.append("_holiday")
-        prefer_full_days = True
-
     if time is None:
         time = []
-    start, end = parse_add_args(time, prefer_full_days=prefer_full_days)
-
-    new_segment_params = NewSegmentParams(start=start, end=end, tags=tags)
+    new_segment_params = parse_add_args(time, prefer_full_days=prefer_full_days)
+    start, end = new_segment_params.start, new_segment_params.end
+    if holiday:
+        new_segment_params.tags.append("_holiday")
+        prefer_full_days = True
 
     conflicting_segments = db.get_segments_between(start, end)
     for current_segment in conflicting_segments:

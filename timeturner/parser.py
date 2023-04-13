@@ -2,11 +2,13 @@ import re
 
 # from pendulum.tz.timezone import Timezone
 from enum import Enum
-from typing import Any, Literal, NamedTuple, TypedDict, overload
+from typing import Any, Literal, TypedDict, cast, overload
 
 import pendulum
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
+
+from timeturner.models import NewSegmentParams
 
 delta_components = re.compile(r"(?P<sign>[+-])?(?P<value>\d+)(?P<unit>[mhd])")
 range_components = re.compile(r"(?P<value>\d+)?(?P<unit>[dwMyY]|day|week|month|year)s?")
@@ -180,36 +182,11 @@ def single_time_parse(
     return now.set(second=0, microsecond=0)
 
 
-@overload
-def parse_add_args(
-    args: list[str],
-    *,
-    prefer_full_days: Literal[True],
-) -> tuple[DateTime, DateTime]:
-    ...
-
-
-@overload
-def parse_add_args(
-    args: list[str],
-    *,
-    prefer_full_days: Literal[False],
-) -> tuple[DateTime, DateTime | None]:
-    ...
-
-
-@overload
-def parse_add_args(
-    args: list[str],
-) -> tuple[DateTime, DateTime | None]:
-    ...
-
-
 def parse_add_args(
     args: list[str],
     *,
     prefer_full_days: bool = False,
-) -> tuple[DateTime, DateTime | None]:
+) -> NewSegmentParams:
     start, end = split_array(args, "-")
     start = single_time_parse(start)
     if end:
@@ -222,6 +199,11 @@ def parse_add_args(
             end = start.end_of("day")
         else:
             end = end.end_of("day")
+    return NewSegmentParams(
+        start=start,
+        end=end,
+        tags=[],
+    )
     return start, end
 
 
