@@ -156,15 +156,11 @@ PARSE_ARGS_EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize("single_time", [True, False])
 @pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ARGS_EXAMPLES)
 @freeze_time_at_1985_25_05__15_34_12
-def test_parse_args(args, single_time, prefer_full_days, expected):
-    if single_time:
-        expected = expected[0]
+def test_parse_args(args, prefer_full_days, expected):
     observed = parser.parse_args(
         args,
-        single_time=single_time,
         prefer_full_days=prefer_full_days,
     )
     assert observed == expected

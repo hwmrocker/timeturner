@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
-from timeturner.parser import parse_args, parse_list_args
+from timeturner.parser import parse_args, parse_list_args, single_time_parse
 from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
@@ -220,7 +220,7 @@ def end(
 ) -> PensiveRow | None:
     if time is None:
         time = []
-    end = parse_args(time, single_time=True)
+    end = single_time_parse(time)
     last_entry = db.get_latest_segment()
 
     if last_entry is None:
