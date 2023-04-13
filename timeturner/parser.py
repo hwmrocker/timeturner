@@ -2,7 +2,7 @@ import re
 
 # from pendulum.tz.timezone import Timezone
 from enum import Enum
-from typing import Any, Literal, TypedDict, overload
+from typing import Any, Literal, NamedTuple, TypedDict, overload
 
 import pendulum
 from pendulum.datetime import DateTime

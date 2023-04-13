@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.table import Table
 
 from timeturner.db import PensiveRow
-from timeturner.timeturner import SegmentsByDay
+from timeturner.models import SegmentsByDay
 
 console = Console()
 

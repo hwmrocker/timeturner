@@ -3,13 +3,13 @@ from pendulum.date import Date
 from pendulum.time import Time
 
 from tests.helpers import parse
-from timeturner import timeturner
+from timeturner import models, timeturner
 from timeturner.db import PensiveRow
 
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
         [],
-        timeturner.DailySummary(),
+        models.DailySummary(),
         id="no segments",
     ),
     pytest.param(
@@ -20,7 +20,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 01:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=1),
             break_time=timeturner.Duration(),
             start=Time(0, 0),
@@ -41,7 +41,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 02:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=2),
             break_time=timeturner.Duration(),
             start=Time(0, 0),
@@ -62,7 +62,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 02:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=2),
             break_time=timeturner.Duration(),
             start=Time(0, 0),
@@ -83,7 +83,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 03:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=1, minutes=59),
             break_time=timeturner.Duration(hours=1, minutes=1),
             start=Time(0, 0),
@@ -104,7 +104,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 09:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=8, minutes=0),
             break_time=timeturner.Duration(hours=1, minutes=0),
             start=Time(0, 0),
@@ -120,7 +120,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 09:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=8, minutes=15),
             break_time=timeturner.Duration(minutes=45),
             start=Time(0, 0),
@@ -136,7 +136,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 05:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=4, minutes=45),
             break_time=timeturner.Duration(minutes=15),
             start=Time(0, 0),
@@ -157,7 +157,7 @@ GET_SUMMARY_TEST_CASES = [
                 end=parse("1985-05-25 05:00:00"),
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=4, minutes=30),
             break_time=timeturner.Duration(minutes=30),
             start=Time(0, 0),
@@ -180,7 +180,7 @@ GET_SUMMARY_TEST_CASES = [
                 tags=["B", "C"],
             ),
         ],
-        timeturner.DailySummary(
+        models.DailySummary(
             work_time=timeturner.Duration(hours=4, minutes=30),
             break_time=timeturner.Duration(minutes=30),
             start=Time(0, 0),

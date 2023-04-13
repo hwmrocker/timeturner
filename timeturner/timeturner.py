@@ -1,41 +1,17 @@
 from itertools import groupby
 from pathlib import Path
-from typing import Iterator, Optional, cast
+from typing import Iterator, cast
 
 from pendulum import period
 from pendulum.date import Date
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
-from pendulum.time import Time
-from pydantic import BaseModel
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
+from timeturner.models import DailySummary, NewSegmentParams, SegmentsByDay
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
 from timeturner.tools.boltons_iterutils import pairwise_iter
-
-
-class DailySummary(BaseModel):
-    work_time: Duration = Duration()
-    break_time: Duration = Duration()
-    start: Optional[Time] = None
-    end: Optional[Time] = None
-    by_tag: dict[str, Duration] = {}
-
-
-class SegmentsByDay(BaseModel):
-    day: Date
-    weekday: int
-    segments: list[PensiveRow]
-    summary: DailySummary
-
-
-class NewSegmentParams(BaseModel):
-    start: DateTime
-    end: Optional[DateTime]
-    tags: Optional[list[str]]
-    description: str = ""
-    passive: bool = False
 
 
 def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:

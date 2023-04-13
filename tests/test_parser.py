@@ -127,7 +127,7 @@ def test_single_time_parse_with_bad_input():
         parser.single_time_parse(["zzz"])
 
 
-PARSE_ARGS_EXAMPLES = [
+PARSE_ADD_ARGS_EXAMPLES = [
     pytest.param([], False, (parse("1985-05-25 15:34:00"), None), id="no args"),
     pytest.param(
         [],
@@ -156,9 +156,9 @@ PARSE_ARGS_EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ARGS_EXAMPLES)
+@pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ADD_ARGS_EXAMPLES)
 @freeze_time_at_1985_25_05__15_34_12
-def test_parse_args(args, prefer_full_days, expected):
+def test_parse_add_args(args, prefer_full_days, expected):
     observed = parser.parse_add_args(
         args,
         prefer_full_days=prefer_full_days,
