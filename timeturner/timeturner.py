@@ -93,9 +93,10 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                     end = row.end
                 else:
                     end = day.end_of("day")
+                print(f"day: {day.start_of('day')}, end: {end}")
                 yield PensiveRow(
                     pk=row.pk,
-                    start=day.start_of("day"),
+                    start=DateTime(day.year, day.month, day.day, tzinfo=row.start.tz),
                     end=end,
                     tags=row.tags,
                     description=row.description,
@@ -151,11 +152,12 @@ def add(
 
     if time is None:
         time = []
-    new_segment_params = parse_add_args(time, prefer_full_days=prefer_full_days)
+    new_segment_params = parse_add_args(
+        time,
+        prefer_full_days=prefer_full_days,
+        holiday=holiday,
+    )
     start, end = new_segment_params.start, new_segment_params.end
-    if holiday:
-        new_segment_params.tags.append("_holiday")
-        prefer_full_days = True
 
     conflicting_segments = db.get_segments_between(start, end)
     for current_segment in conflicting_segments:

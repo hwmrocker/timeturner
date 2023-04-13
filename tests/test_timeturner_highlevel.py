@@ -129,6 +129,17 @@ ADD_TEST_CASES = [
         ],
         id="future segment, don't end new segment",
     ),
+    pytest.param(
+        [
+            ["9:00"],
+            ["1985-05-01", "@_holiday"],
+        ],
+        [
+            (parse("1985-05-01 00:00:00"), parse("1985-05-01").end_of("day")),
+            (parse("1985-05-25 09:00:00"), None),
+        ],
+        id="past day, @_holiday",
+    ),
 ]
 
 

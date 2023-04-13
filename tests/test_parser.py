@@ -130,7 +130,7 @@ def test_single_time_parse_with_bad_input():
 PARSE_ADD_ARGS_EXAMPLES = [
     pytest.param(
         [],
-        False,
+        dict(),
         models.NewSegmentParams(
             start=parse("1985-05-25 15:34:00"),
             end=None,
@@ -140,7 +140,7 @@ PARSE_ADD_ARGS_EXAMPLES = [
     ),
     pytest.param(
         [],
-        True,
+        dict(prefer_full_days=True),
         models.NewSegmentParams(
             start=parse("1985-05-25 00:00:00"),
             end=parse("1985-05-25 00:00:00").end_of("day"),
@@ -150,7 +150,7 @@ PARSE_ADD_ARGS_EXAMPLES = [
     ),
     pytest.param(
         ["-2d", "-", "+1d"],
-        True,
+        dict(prefer_full_days=True),
         models.NewSegmentParams(
             start=parse("1985-05-23 00:00:00"),
             end=parse("1985-05-24 00:00:00").end_of("day"),
@@ -160,7 +160,7 @@ PARSE_ADD_ARGS_EXAMPLES = [
     ),
     pytest.param(
         ["23", "07:00", "-", "19:00"],
-        False,
+        dict(prefer_full_days=False),
         models.NewSegmentParams(
             start=parse("1985-05-23 07:00:00"),
             end=parse("1985-05-23 19:00:00"),
@@ -170,7 +170,7 @@ PARSE_ADD_ARGS_EXAMPLES = [
     ),
     pytest.param(
         ["23", "07:00", "-", "+4h"],
-        False,
+        dict(prefer_full_days=False),
         models.NewSegmentParams(
             start=parse("1985-05-23 07:00:00"),
             end=parse("1985-05-23 11:00:00"),
@@ -178,15 +178,45 @@ PARSE_ADD_ARGS_EXAMPLES = [
         ),
         id="two days in the past, with delta",
     ),
+    pytest.param(
+        [],
+        dict(holiday=True),
+        models.NewSegmentParams(
+            start=parse("1985-05-25 00:00:00"),
+            end=parse("1985-05-25").end_of("day"),
+            tags=["_holiday"],
+        ),
+        id="no args, holiday",
+    ),
+    pytest.param(
+        ["@_holiday"],
+        dict(),
+        models.NewSegmentParams(
+            start=parse("1985-05-25 00:00:00"),
+            end=parse("1985-05-25").end_of("day"),
+            tags=["_holiday"],
+        ),
+        id="no args, @_holiday",
+    ),
+    pytest.param(
+        ["1985-05-01", "@_holiday"],
+        dict(),
+        models.NewSegmentParams(
+            start=parse("1985-05-01 00:00:00"),
+            end=parse("1985-05-01").end_of("day"),
+            tags=["_holiday"],
+        ),
+        id="past date, @_holiday",
+    ),
 ]
 
 
-@pytest.mark.parametrize("args, prefer_full_days, expected", PARSE_ADD_ARGS_EXAMPLES)
+@pytest.mark.parametrize("args, kwargs, expected", PARSE_ADD_ARGS_EXAMPLES)
 @freeze_time_at_1985_25_05__15_34_12
-def test_parse_add_args(args, prefer_full_days, expected):
+def test_parse_add_args(args, kwargs, expected):
     observed = parser.parse_add_args(
         args,
-        prefer_full_days=prefer_full_days,
+        **kwargs,
     )
     assert observed == expected
 

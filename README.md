@@ -43,7 +43,8 @@ If you forgot to track an activity in the past, you can add it with `timeturner 
 > **Warning:**
 > This is not final yet.
 
-If you want to add a public holiday, you can use the `--holiday` flag.
+If you want to add a public holiday, you can use the `--holiday` flag or add `@_holiday` after
+the activity times when adding a new event.
 
 
 ## Configuration
@@ -85,7 +86,6 @@ If you forget to track a rest period, the time tracker will reduce the required 
 
 
 TODOs:
-- [ ] Add Changelog
 - [ ] Add Configuration
   - [ ] ignore seconds
   - [ ] freeze time, to generate useful images
@@ -93,7 +93,6 @@ TODOs:
 - [ ] show and generate tui output
 - [ ] Add section about contributions
 - [ ] Add precommit hook to ensure code is formatted
-- [ ] Add version and git hash to build, so it can be shown in the tui
 - [ ] Generate docstrings for DB methods
 - [ ] Remove import command (it contains assumptions that will not be true for everyone)
   - [ ] Document how to import data from other time trackers
@@ -101,7 +100,7 @@ TODOs:
   - [ ] Add mode to import jsonl file
 - [ ] Add logging
   - [ ] allow different log levels for database and application
-- [ ] add a change log
+- [ ] add test that the last release version in Changelog is the same as in pyproject.toml and app
 - [ ] README
   - [ ] auto generate config options
 - [ ] db
@@ -114,7 +113,7 @@ TODOS by command:
   - [ ] allow passive activities
   - [ ] allow sick days
   - [ ] allow vacation days
-  - [ ] allow for public holidays
+  - [x] allow for public holidays
 - [ ] end
   - [ ] add tests
 
@@ -124,9 +123,14 @@ TODOS by command:
     - [ ] e.g. new new add alias with setting passive to true
 - [ ] list
   - [ ] split up multiday activities
+  - [ ] holidays should not count as work time
+    - [ ] it should also not count as missing work time
   - [ ] group by year, month, week, day
   - [ ] add option to show only open activities
   - [ ] add tests
+
+- [ ] export
+  - [ ] probably like list --format jsonl
 
 - [ ] undo (revert the last change)
 - [ ] confirm changes that would modify other entries

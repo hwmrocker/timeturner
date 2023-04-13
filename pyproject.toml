@@ -8,8 +8,8 @@ packages = [{ include = "timeturner" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-rich = "^13.3.1"
-typer = "^0.7.0"
+rich = "*"
+typer = { extras = ["all"], version = "*" }
 pendulum = "^2.1.2"
 pydantic = "^1.10.5"
 tomlkit = "^0.11.6"

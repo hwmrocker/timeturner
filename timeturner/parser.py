@@ -56,6 +56,17 @@ class DateTimeDict(TypedDict, total=False):
     tzinfo: Any
 
 
+def split_filter_tags(args: list[str]) -> tuple[list[str], list[str]]:
+    tags = []
+    filtered_args = []
+    for arg in args:
+        if arg.startswith("@"):
+            tags.append(arg[1:])
+        else:
+            filtered_args.append(arg)
+    return filtered_args, tags
+
+
 def split_array(array: list[str], separator: str) -> tuple[list[str], list[str]]:
     try:
         index = array.index(separator)
@@ -186,7 +197,15 @@ def parse_add_args(
     args: list[str],
     *,
     prefer_full_days: bool = False,
+    holiday: bool = False,
 ) -> NewSegmentParams:
+    args, tags = split_filter_tags(args)
+    if "_holiday" in tags:
+        holiday = True
+    if holiday:
+        if "_holiday" not in tags:
+            tags.append("_holiday")
+        prefer_full_days = True
     start, end = split_array(args, "-")
     start = single_time_parse(start)
     if end:
@@ -202,9 +221,8 @@ def parse_add_args(
     return NewSegmentParams(
         start=start,
         end=end,
-        tags=[],
+        tags=tags,
     )
-    return start, end
 
 
 def parse_list_args(
