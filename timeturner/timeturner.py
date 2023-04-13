@@ -88,9 +88,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 description=row.description,
                 passive=row.passive,
             )
-            for day in period(row.start.date().add(days=1), row.end.date()).range(
-                "days"
-            ):
+            for day in iter_over_days(row.start, row.end):
                 if day == row.end.date():
                     end = row.end
                 else:
@@ -103,6 +101,11 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                     description=row.description,
                     passive=row.passive,
                 )
+
+
+def iter_over_days(start: DateTime, end: DateTime) -> Iterator[Date]:
+    for dt in period(start.add(days=1), end).range("days"):
+        yield cast(DateTime, dt).date()
 
 
 def _list(
