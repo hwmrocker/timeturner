@@ -30,6 +30,14 @@ class SegmentsByDay(BaseModel):
     summary: DailySummary
 
 
+class NewSegmentParams(BaseModel):
+    start: DateTime
+    end: Optional[DateTime]
+    tags: Optional[list[str]]
+    description: str = ""
+    passive: bool = False
+
+
 def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:
     """
     Expecting segments to be sorted by start time.
@@ -156,44 +164,53 @@ def _list(
 def add(
     time: list[str] | None,
     *,
+    holiday: bool = False,
     db: DatabaseConnection,
 ) -> PensiveRow:
+    tags = []
+    prefer_full_days = False
+    now = DateTime.now()
+
+    if holiday:
+        tags.append("_holiday")
+        prefer_full_days = True
+
     if time is None:
         time = []
-    start, end = parse_args(time)
+    start, end = parse_args(time, prefer_full_days=prefer_full_days)
+
+    new_segment_params = NewSegmentParams(start=start, end=end, tags=tags)
 
     conflicting_segments = db.get_segments_between(start, end)
     for current_segment in conflicting_segments:
+        # TODO: return a warning that other segments were changed
+        if start < current_segment.start:
+            if end and end > current_segment.start:
+                if current_segment.end and end < current_segment.end:
+                    db.update_segment(current_segment.pk, start=end)
+                elif current_segment.end and end >= current_segment.end:
+                    db.delete_segment(current_segment.pk)
+                else:
+                    db.update_segment(current_segment.pk, start=end)
+            elif end is None and current_segment.start < now:
+                new_segment_params.end = current_segment.start
+        elif current_segment.end is None:
+            db.update_segment(current_segment.pk, end=start)
+        elif end and start > current_segment.start and end < current_segment.end:
+            db.update_segment(current_segment.pk, end=start)
+            ret = db.add_segment(**new_segment_params.dict())
+            db.add_segment(
+                end,
+                current_segment.end,
+                tags=current_segment.tags,
+                description=current_segment.description,
+                passive=current_segment.passive,
+            )
+            return ret
+        elif start < current_segment.end and start > current_segment.start:
+            db.update_segment(current_segment.pk, end=start)
 
-        if current_segment is not None:
-            # TODO: return a warning that other segments were changed
-            if start < current_segment.start:
-                if end and end > current_segment.start:
-                    if current_segment.end and end < current_segment.end:
-                        db.update_segment(current_segment.pk, start=end)
-                    elif current_segment.end and end >= current_segment.end:
-                        db.delete_segment(current_segment.pk)
-                    else:
-                        db.update_segment(current_segment.pk, start=end)
-                elif end is None:
-                    end = current_segment.start
-            elif current_segment.end is None:
-                db.update_segment(current_segment.pk, end=start)
-            elif end and start > current_segment.start and end < current_segment.end:
-                db.update_segment(current_segment.pk, end=start)
-                ret = db.add_segment(start, end)
-                db.add_segment(
-                    end,
-                    current_segment.end,
-                    tags=current_segment.tags,
-                    description=current_segment.description,
-                    passive=current_segment.passive,
-                )
-                return ret
-            elif start < current_segment.end and start > current_segment.start:
-                db.update_segment(current_segment.pk, end=start)
-
-    return db.add_segment(start, end)
+    return db.add_segment(**new_segment_params.dict())
 
 
 def end(

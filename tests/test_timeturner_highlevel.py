@@ -50,8 +50,8 @@ ADD_TEST_CASES = [
     pytest.param(
         [["9:00"], ["8:00"]],
         [
-            (parse("1985-05-25 09:00:00"), None),
             (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:00:00")),
+            (parse("1985-05-25 09:00:00"), None),
         ],
         id="auto end segment that happened before",
     ),
@@ -117,6 +117,17 @@ ADD_TEST_CASES = [
             (parse("1985-05-25 10:30:00"), parse("1985-05-25 11:00:00")),
         ],
         id="new segment in middle of two, plus overwrite",
+    ),
+    pytest.param(
+        [
+            ["2000-01-01", "0:00", "-", "2000-01-01", "23:59:59"],
+            ["9:00"],
+        ],
+        [
+            (parse("1985-05-25 09:00:00"), None),
+            (parse("2000-01-01 00:00:00"), parse("2000-01-01 23:59:00")),
+        ],
+        id="future segment, don't end new segment",
     ),
 ]
 

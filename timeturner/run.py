@@ -47,12 +47,17 @@ def _list(time: Optional[list[str]] = typer.Argument(None)):
 @app.command()
 def add(
     time: Optional[list[str]] = typer.Argument(None),
+    holiday: bool = False,
     auto_stop: Optional[bool] = None,
     # passive: bool | None = False,
     # tags: str | None = None,
     # description: str | None = None,
 ):
-    data = timeturner.add(time, db=settings.database.connection)
+    data = timeturner.add(
+        time,
+        holiday=holiday,
+        db=settings.database.connection,
+    )
     if settings.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:

@@ -2,6 +2,9 @@
 
 ## unreleased
 
+* future activities will not end the current activity anymore
+* added ground work to support holidays
+
 ## 0.1.2 (2023-03-29)
 
 * calling timeturner with no arguments will now print help

@@ -38,6 +38,14 @@ If you forgot to track an activity in the past, you can add it with `timeturner 
 
 ![`timeturner add -- -1d@9:00 - +8h45m`](img/add_past.svg)
 
+### Adding a public holiday
+
+> **Warning:**
+> This is not final yet.
+
+If you want to add a public holiday, you can use the `--holiday` flag.
+
+
 ## Configuration
 
 | Environment Variable       | Default Value                    | Description                                  |
@@ -105,6 +113,8 @@ TODOS by command:
 - [ ] add
   - [ ] allow passive activities
   - [ ] allow sick days
+  - [ ] allow vacation days
+  - [ ] allow for public holidays
 - [ ] end
   - [ ] add tests
 
@@ -114,11 +124,12 @@ TODOS by command:
     - [ ] e.g. new new add alias with setting passive to true
 - [ ] list
   - [ ] split up multiday activities
-  - [ ] add option to show only open activities
   - [ ] group by year, month, week, day
+  - [ ] add option to show only open activities
   - [ ] add tests
 
 - [ ] undo (revert the last change)
+- [ ] confirm changes that would modify other entries
 ### Design Goals
 
 - minimalistic, little to type
