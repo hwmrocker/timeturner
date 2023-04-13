@@ -281,7 +281,5 @@ def parse_list_args(
         # we definitely define a specific time, so we don't change to
         # the start of the day, or the end of the day
         start = single_time_parse(args, now=now)
-        print(start.time())
-        print(now.time())
 
     return start, end
