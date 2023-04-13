@@ -181,7 +181,7 @@ def single_time_parse(
 
 
 @overload
-def parse_args(
+def parse_add_args(
     args: list[str],
     *,
     prefer_full_days: Literal[True],
@@ -190,7 +190,7 @@ def parse_args(
 
 
 @overload
-def parse_args(
+def parse_add_args(
     args: list[str],
     *,
     prefer_full_days: Literal[False],
@@ -199,13 +199,13 @@ def parse_args(
 
 
 @overload
-def parse_args(
+def parse_add_args(
     args: list[str],
 ) -> tuple[DateTime, DateTime | None]:
     ...
 
 
-def parse_args(
+def parse_add_args(
     args: list[str],
     *,
     prefer_full_days: bool = False,

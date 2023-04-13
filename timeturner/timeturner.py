@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection, PensiveRow
-from timeturner.parser import parse_args, parse_list_args, single_time_parse
+from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
 from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
@@ -177,7 +177,7 @@ def add(
 
     if time is None:
         time = []
-    start, end = parse_args(time, prefer_full_days=prefer_full_days)
+    start, end = parse_add_args(time, prefer_full_days=prefer_full_days)
 
     new_segment_params = NewSegmentParams(start=start, end=end, tags=tags)
 
