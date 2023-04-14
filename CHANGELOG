@@ -3,8 +3,8 @@
 ## 0.2.0 (unreleased)
 
 * future activities will not end the current activity anymore
-* added ground work to support holidays
 * holidays can be added with @_holiday tag
+* holidays do not require work hours and don't count towards the work hours of the day
 
 ## 0.1.2 (2023-03-29)
 

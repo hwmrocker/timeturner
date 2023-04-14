@@ -9,13 +9,15 @@ console = Console()
 
 
 def _pretty_duration(duration: Duration) -> str:
+    a = ""
     if duration.seconds < 0:
-        return "NEGATIVE TIME"
+        # return "NEGATIVE TIME"
+        a = "-"
 
     periods = [
-        ("w", duration.weeks),
-        ("d", duration.remaining_days),
-        ("h", duration.hours),
+        # ("w", duration.weeks),
+        # ("d", duration.remaining_days),
+        ("h", int(duration.total_hours())),
         ("m", duration.minutes),
     ]
 
@@ -23,12 +25,12 @@ def _pretty_duration(duration: Duration) -> str:
     for period in periods:
         unit, count = period
         if abs(count) > 0:
-            parts.append(f"{count}{unit}")
+            parts.append(f"{abs(count)}{unit}")
 
-    return str(" ".join(parts))
+    return a + str(" ".join(parts))
 
 
-def pretty_duration(duration: Duration, breaks: Duration) -> str:
+def pretty_duration(duration: Duration, breaks: Duration = Duration()) -> str:
     if breaks:
         return f"{_pretty_duration(duration)} (+{_pretty_duration(breaks)} break)"
     return _pretty_duration(duration)
@@ -44,26 +46,44 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
     )
 
     table.add_column("Start", style="dim", width=20)
-    table.add_column("End", style="dim", width=20)
-    table.add_column("Duration", style="dim", width=20)
+    table.add_column("End", style="dim", width=6)
+    table.add_column("Type", style="dim", width=6)
+    table.add_column("Work Time", style="dim", width=8)
+    table.add_column("Break Time", style="dim", width=8)
+    table.add_column("Over Time", style="dim", width=8)
 
-    total_durations = []
-
+    total_work = []
+    total_break = []
+    total_over = []
+    w = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     for segment in segments:
-        total_durations.append(segment.summary.work_time)
+        total_work.append(segment.summary.work_time)
+        total_break.append(segment.summary.break_time)
+        total_over.append(segment.summary.over_time)
         if segment.summary.start:
-            start_str = f"{segment.day} {segment.summary.start.format('HH:mm')}"
+            start_str = f"[bold]{w[segment.day.weekday()]}[/] {segment.day} {segment.summary.start.format('HH:mm')}"
         else:
-            start_str = f"{segment.day}"
+            start_str = f"[bold]{w[segment.day.weekday()]}[/] {segment.day}"
         table.add_row(
             start_str,
             segment.summary.end.format("HH:mm") if segment.summary.end else "",
-            pretty_duration(segment.summary.work_time, segment.summary.break_time),
+            str(segment.summary.day_type.value),
+            pretty_duration(segment.summary.work_time),
+            pretty_duration(segment.summary.break_time),
+            pretty_duration(segment.summary.over_time),
         )
+    table.add_row(
+        "total:",
+        "",
+        "",
+        pretty_duration(sum(total_work, Duration())),
+        pretty_duration(sum(total_break, Duration())),
+        pretty_duration(sum(total_over, Duration())),
+    )
 
     console.print(table)
-    total_duration = sum(total_durations, Duration())
-    print(f"Total: {total_duration.total_hours():.0f}h {total_duration.minutes}m")
+    # total_duration = sum(total_durations, Duration())
+    # print(f"Total: {total_duration.total_hours():.0f}h {total_duration.minutes}m")
 
 
 def print_pretty_record(segment: PensiveRow | None) -> None:

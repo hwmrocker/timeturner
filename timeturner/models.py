@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum, auto
 from typing import Optional, cast
 
 import pendulum
@@ -11,11 +12,22 @@ from pendulum.time import Time
 from pydantic import BaseModel, validator
 
 
+class DayType(Enum):
+    WORK = auto()
+    HOLIDAY = auto()
+    VACATION = auto()
+    WEEKEND = auto()
+
+
 class DailySummary(BaseModel):
+    day: Date
+    day_type: DayType = DayType.WORK
     work_time: Duration = Duration()
     break_time: Duration = Duration()
+    over_time: Duration = Duration()
     start: Optional[Time] = None
     end: Optional[Time] = None
+    description: str | None = None
     by_tag: dict[str, Duration] = {}
 
 
@@ -55,11 +67,11 @@ class TimeSegment(BaseModel):
         raise ValueError(f"Could not parse {value} as a list of tags")
 
     @property
-    def duration(self) -> Period:
+    def duration(self) -> Duration:
         if self.end is None:
-            duration = cast(Period, pendulum.now() - self.start)
+            duration = cast(Duration, pendulum.now() - self.start)
         else:
-            duration = cast(Period, self.end - self.start)
+            duration = cast(Duration, self.end - self.start)
 
         return duration
 

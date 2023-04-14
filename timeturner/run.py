@@ -36,7 +36,7 @@ def callback(
 @app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
-    data = timeturner._list(time, db=settings.database.connection)
+    data = timeturner.list_(time, db=settings.database.connection)
     if settings.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:

@@ -189,5 +189,5 @@ LIST_SEGMENTS_TESTS = [
 @freeze_time_at_1985_25_05__15_34_12
 def test_list_segments(db: DatabaseConnection, query, expected_days):
     timeturner.add(["1985-05-21", "9:00", "-", "+3h"], db=db)
-    summaries = timeturner._list(query, db=db)
+    summaries = timeturner.list_(query, db=db)
     assert [summary.day for summary in summaries] == expected_days

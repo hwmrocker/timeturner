@@ -9,16 +9,29 @@ from pendulum.duration import Duration
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.models import DailySummary, NewSegmentParams, PensiveRow, SegmentsByDay
+from timeturner.helper import iter_over_days
+from timeturner.models import (
+    DailySummary,
+    DayType,
+    NewSegmentParams,
+    PensiveRow,
+    SegmentsByDay,
+)
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
 from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
-def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:
+def get_daily_summary(day: Date, segments: list[PensiveRow]) -> DailySummary:
     """
     Expecting segments to be sorted by start time.
     All segments should be on the same day.
     No segments should overlap.
+
+    get daily work time
+    get daily break time
+    get daily overtime
+
+    vacation and holiday are not considered work time and produce no overtime
     """
     work_time = Duration()
     break_time = Duration()
@@ -27,6 +40,22 @@ def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:
     by_tag = {}
     segment = None
     for segment in segments:
+        if segment.start.date() != day:
+            raise ValueError(
+                f"Segment is not on the given day. {day} != {segment.start.date()}"
+            )
+        if "_holiday" in segment.tags:
+            return DailySummary(
+                day=day,
+                day_type=DayType.HOLIDAY,
+                work_time=Duration(),
+                break_time=Duration(),
+                over_time=Duration(),
+                start=None,
+                end=None,
+                description="Holiday",
+                by_tag={},
+            )
         if start is None:
             start = segment.start.time()
         work_time += segment.duration
@@ -60,9 +89,18 @@ def get_daily_summary(segments: list[PensiveRow]) -> DailySummary:
             work_time -= missing_break_time
             break_time += missing_break_time
 
+    required_work_duration = Duration(hours=8)
+    day_type = DayType.WORK
+    if day.weekday() >= 5:
+        required_work_duration = Duration(hours=0)
+        day_type = DayType.WEEKEND
+
     return DailySummary(
+        day=day,
+        day_type=day_type,
         work_time=work_time,
         break_time=break_time,
+        over_time=work_time - required_work_duration,
         start=start,
         end=end,
         by_tag=by_tag,
@@ -88,7 +126,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 description=row.description,
                 passive=row.passive,
             )
-            for day in iter_over_days(row.start, row.end):
+            for day in iter_over_days(row.start.add(days=1), row.end):
                 if day == row.end.date():
                     end = row.end
                 else:
@@ -104,12 +142,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 )
 
 
-def iter_over_days(start: DateTime, end: DateTime) -> Iterator[Date]:
-    for dt in period(start.add(days=1), end).range("days"):
-        yield cast(DateTime, dt).date()
-
-
-def _list(
+def list_(
     time: list[str] | None,
     *,
     db: DatabaseConnection,
@@ -127,15 +160,16 @@ def _list(
     for day, segments in groupby(midnight_devided_segments, lambda r: r.start.date()):
         segments_per_day[str(day)] = list(segments)
     daily_segments = []
-    for day in request_period.range("days"):
+    for day in iter_over_days(request_period.start, request_period.end):
+        # request_period.range("days"):
         day = cast(DateTime, day)
-        segments = segments_per_day[str(day.date())]
+        segments = segments_per_day[str(day)]
         daily_segments.append(
             SegmentsByDay(
                 day=day,
                 weekday=day.weekday(),
                 segments=segments,
-                summary=get_daily_summary(segments),
+                summary=get_daily_summary(day, segments),
             )
         )
     return daily_segments

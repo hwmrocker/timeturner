@@ -123,8 +123,8 @@ TODOS by command:
     - [ ] e.g. new new add alias with setting passive to true
 - [ ] list
   - [ ] split up multiday activities
-  - [ ] holidays should not count as work time
-    - [ ] it should also not count as missing work time
+  - [x] holidays should not count as work time
+    - [x] it should also not count as missing work time
   - [ ] group by year, month, week, day
   - [ ] add option to show only open activities
   - [ ] add tests
