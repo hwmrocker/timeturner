@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.1 (unreleased)
+
+## 0.2.0 (2023-04-14)
 
 * future activities will not end the current activity anymore
 * holidays can be added with @_holiday tag
