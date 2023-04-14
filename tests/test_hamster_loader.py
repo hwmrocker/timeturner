@@ -6,7 +6,8 @@ from pendulum.datetime import DateTime
 from pendulum.parser import parse as _parse
 
 from timeturner import loader
-from timeturner.db import DatabaseConnection, TimeSegment
+from timeturner.db import DatabaseConnection
+from timeturner.models import TimeSegment
 
 
 def parse(s: str) -> DateTime:

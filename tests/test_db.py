@@ -6,7 +6,8 @@ from pendulum import datetime
 # from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
-from timeturner.db import DatabaseConnection, PensiveRow
+from timeturner.db import DatabaseConnection
+from timeturner.models import PensiveRow
 
 pytestmark = pytest.mark.dependency(name="db_tests")
 

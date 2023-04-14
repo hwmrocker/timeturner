@@ -128,7 +128,7 @@ TODOS by command:
   - [ ] group by year, month, week, day
   - [ ] add option to show only open activities
   - [ ] add tests
-
+- [ ] import holidays
 - [ ] export
   - [ ] probably like list --format jsonl
 

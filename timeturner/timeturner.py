@@ -8,8 +8,8 @@ from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
 from timeturner import loader
-from timeturner.db import DatabaseConnection, PensiveRow
-from timeturner.models import DailySummary, NewSegmentParams, SegmentsByDay
+from timeturner.db import DatabaseConnection
+from timeturner.models import DailySummary, NewSegmentParams, PensiveRow, SegmentsByDay
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
 from timeturner.tools.boltons_iterutils import pairwise_iter
 

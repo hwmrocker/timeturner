@@ -3,8 +3,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from timeturner.db import PensiveRow
-from timeturner.models import SegmentsByDay
+from timeturner.models import PensiveRow, SegmentsByDay
 
 console = Console()
 
