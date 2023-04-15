@@ -4,6 +4,7 @@ from pendulum.date import Date
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
 from timeturner import timeturner
 from timeturner.db import DatabaseConnection
+from timeturner.settings import ReportSettings
 
 pytestmark = pytest.mark.dependency(depends=["db_tests"], scope="session")
 
@@ -132,13 +133,22 @@ ADD_TEST_CASES = [
     pytest.param(
         [
             ["9:00"],
-            ["1985-05-01", "@_holiday"],
+            ["1985-05-01", "@holiday"],
         ],
         [
             (parse("1985-05-01 00:00:00"), parse("1985-05-01").end_of("day")),
             (parse("1985-05-25 09:00:00"), None),
         ],
-        id="past day, @_holiday",
+        id="past day, @holiday",
+    ),
+    pytest.param(
+        [
+            ["9:00", "@random_tag"],
+        ],
+        [
+            (parse("1985-05-25 09:00:00"), None),
+        ],
+        id="add segment with tag",
     ),
 ]
 
@@ -147,7 +157,7 @@ ADD_TEST_CASES = [
 @freeze_time_at_1985_25_05__15_34_12
 def test_add_segment(db: DatabaseConnection, args_list, expected_start_end_times):
     for args in args_list:
-        timeturner.add(args, db=db)
+        timeturner.add(args, db=db, report_settings=ReportSettings())
     all_segments = db.get_all_segments()
     start_and_end_times = [(segment.start, segment.end) for segment in all_segments]
     print(start_and_end_times)
@@ -188,6 +198,15 @@ LIST_SEGMENTS_TESTS = [
 @pytest.mark.parametrize("query, expected_days", LIST_SEGMENTS_TESTS)
 @freeze_time_at_1985_25_05__15_34_12
 def test_list_segments(db: DatabaseConnection, query, expected_days):
-    timeturner.add(["1985-05-21", "9:00", "-", "+3h"], db=db)
-    summaries = timeturner.list_(query, db=db)
+    report_settings = ReportSettings()
+    timeturner.add(
+        ["1985-05-21", "9:00", "-", "+3h"],
+        report_settings=report_settings,
+        db=db,
+    )
+    summaries = timeturner.list_(
+        query,
+        report_settings=report_settings,
+        db=db,
+    )
     assert [summary.day for summary in summaries] == expected_days

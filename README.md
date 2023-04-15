@@ -43,7 +43,7 @@ If you forgot to track an activity in the past, you can add it with `timeturner 
 > **Warning:**
 > This is not final yet.
 
-If you want to add a public holiday, you can use the `--holiday` flag or add `@_holiday` after
+If you want to add a public holiday, you can use the `--holiday` flag or add `@holiday` after
 the activity times when adding a new event.
 
 
@@ -90,6 +90,11 @@ TODOs:
   - [ ] ignore seconds
   - [ ] freeze time, to generate useful images
   - [ ] automatic rest periods
+  - [ ] default work time
+  - [ ] default work week days
+- [ ] allow full day activities to coexist with other activities
+  - [ ] travel time and holiday could happen
+- [ ] DB migrations
 - [ ] show and generate tui output
 - [ ] Add section about contributions
 - [ ] Add precommit hook to ensure code is formatted
@@ -121,6 +126,7 @@ TODOS by command:
   - [ ] modify and write configfile
   - [ ] allow to add aliases for commands
     - [ ] e.g. new new add alias with setting passive to true
+  - [ ] add test when holiday tag name is changed in settings
 - [ ] list
   - [ ] split up multiday activities
   - [x] holidays should not count as work time

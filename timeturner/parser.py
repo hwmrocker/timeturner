@@ -9,6 +9,7 @@ from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
 from timeturner.models import NewSegmentParams
+from timeturner.settings import ReportSettings
 
 delta_components = re.compile(r"(?P<sign>[+-])?(?P<value>\d+)(?P<unit>[mhd])")
 range_components = re.compile(r"(?P<value>\d+)?(?P<unit>[dwMyY]|day|week|month|year)s?")
@@ -198,13 +199,14 @@ def parse_add_args(
     *,
     prefer_full_days: bool = False,
     holiday: bool = False,
+    report_settings: ReportSettings,
 ) -> NewSegmentParams:
     args, tags = split_filter_tags(args)
-    if "_holiday" in tags:
+    if report_settings.holiday_tag in tags:
         holiday = True
     if holiday:
-        if "_holiday" not in tags:
-            tags.append("_holiday")
+        if report_settings.holiday_tag not in tags:
+            tags.append(report_settings.holiday_tag)
         prefer_full_days = True
     start, end = split_array(args, "-")
     start = single_time_parse(start)

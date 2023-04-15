@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 import tomlkit
-from pydantic import BaseModel, BaseSettings
+from pendulum.duration import Duration
+from pydantic import BaseModel, BaseSettings, root_validator, validator
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
@@ -55,9 +56,74 @@ class DatabaseSettings(BaseModel):
         )
 
 
+class DurationSetting(BaseModel):
+    hours: int = 0
+    minutes: int = 0
+
+    @property
+    def duration(self) -> Duration:
+        return Duration(
+            hours=self.hours,
+            minutes=self.minutes,
+        )
+
+
+class TagSettings(BaseModel):
+    name: str
+    full_day: bool = False
+    work_day: bool = False
+    track_work_time: bool = False
+    track_work_time_passive: bool = False
+    track_break_time: bool = False
+    track_over_time: bool = False
+
+
+class ReportSettings(BaseModel):
+    output: Literal["json", "rich"] = "rich"
+    holiday_tag: str = "holiday"
+    passive_travel_tag: str = "travel"
+    # vacation_tag: str = "vacation"
+    # sick_tag: str = "sick"
+    # sick_certified_tag: str = "sick-certified"
+    reset_default_work_time: bool = True
+    tag_settings: dict[str, TagSettings] = {
+        "holiday": TagSettings(
+            name="holiday",
+            full_day=True,
+        ),
+        "vacation": TagSettings(
+            name="vacation",
+            full_day=True,
+        ),
+        "sick": TagSettings(
+            name="sick",
+            full_day=True,
+        ),
+        "travel": TagSettings(
+            name="travel",
+            track_work_time_passive=True,
+        ),
+    }
+
+    @root_validator
+    def validate_tag_settings(cls, values):
+
+        avaliable_tags = set(values["tag_settings"].keys())
+        required_tags = {
+            values["holiday_tag"],
+            values["passive_travel_tag"],
+        }
+        missing_tags = required_tags - avaliable_tags
+        if missing_tags:
+            raise ValueError(
+                f"tag_settings missing required tag definition: {', '.join(missing_tags)}"
+            )
+        return values
+
+
 class TimeTurnerSettings(Settings):
     database: DatabaseSettings = DatabaseSettings()
-    output: Literal["json", "rich"] = "rich"
+    report: ReportSettings = ReportSettings()
 
     version: str = __VERSION__
     commit: str = __COMMIT__

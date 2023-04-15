@@ -5,6 +5,7 @@ from pendulum.time import Time
 from tests.helpers import parse
 from timeturner import models, timeturner
 from timeturner.models import DayType, PensiveRow
+from timeturner.settings import ReportSettings
 
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
@@ -235,7 +236,10 @@ def test_get_summary(segments, expected_summary):
     day = Date(1985, 5, 25)
     if segments:
         day = segments[0].start.date()
-    assert timeturner.get_daily_summary(day, segments) == expected_summary
+    assert (
+        timeturner.get_daily_summary(day, segments, report_settings=ReportSettings())
+        == expected_summary
+    )
 
 
 ILLEGAL_SEGMENTS = [
@@ -260,7 +264,9 @@ ILLEGAL_SEGMENTS = [
 @pytest.mark.parametrize("segments, expected_error", ILLEGAL_SEGMENTS)
 def test_get_summary_with_illegal_segments(segments, expected_error):
     with pytest.raises(expected_error):
-        timeturner.get_daily_summary(Date(1985, 5, 25), segments)
+        timeturner.get_daily_summary(
+            Date(1985, 5, 25), segments, report_settings=ReportSettings()
+        )
 
 
 GROUP_BY_DAY_TEST_CASES = [

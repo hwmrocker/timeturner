@@ -2,6 +2,9 @@
 
 ## 0.2.1 (unreleased)
 
+* changed default holiday tag to @holiday
+* holiday tag can be configured in settings
+
 ## 0.2.0 (2023-04-14)
 
 * future activities will not end the current activity anymore

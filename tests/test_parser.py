@@ -2,8 +2,10 @@ import pytest
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner import models, parser
+from timeturner.settings import ReportSettings
 
 # tz_offset = pendulum.now().offset_hours
+default_report_settings = ReportSettings()
 
 
 COMPONENT_TYPE_EXAMPLES = [
@@ -184,29 +186,29 @@ PARSE_ADD_ARGS_EXAMPLES = [
         models.NewSegmentParams(
             start=parse("1985-05-25 00:00:00"),
             end=parse("1985-05-25").end_of("day"),
-            tags=["_holiday"],
+            tags=[default_report_settings.holiday_tag],
         ),
         id="no args, holiday",
     ),
     pytest.param(
-        ["@_holiday"],
+        ["@holiday"],
         dict(),
         models.NewSegmentParams(
             start=parse("1985-05-25 00:00:00"),
             end=parse("1985-05-25").end_of("day"),
-            tags=["_holiday"],
+            tags=[default_report_settings.holiday_tag],
         ),
-        id="no args, @_holiday",
+        id="no args, @holiday",
     ),
     pytest.param(
-        ["1985-05-01", "@_holiday"],
+        ["1985-05-01", "@holiday"],
         dict(),
         models.NewSegmentParams(
             start=parse("1985-05-01 00:00:00"),
             end=parse("1985-05-01").end_of("day"),
-            tags=["_holiday"],
+            tags=[default_report_settings.holiday_tag],
         ),
-        id="past date, @_holiday",
+        id="past date, @holiday",
     ),
 ]
 
@@ -214,9 +216,13 @@ PARSE_ADD_ARGS_EXAMPLES = [
 @pytest.mark.parametrize("args, kwargs, expected", PARSE_ADD_ARGS_EXAMPLES)
 @freeze_time_at_1985_25_05__15_34_12
 def test_parse_add_args(args, kwargs, expected):
+    add_kwargs = dict(
+        report_settings=default_report_settings,
+    )
+    add_kwargs.update(kwargs)
     observed = parser.parse_add_args(
         args,
-        **kwargs,
+        **add_kwargs,
     )
     assert observed == expected
 

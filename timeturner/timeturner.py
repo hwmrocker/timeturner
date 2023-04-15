@@ -18,10 +18,16 @@ from timeturner.models import (
     SegmentsByDay,
 )
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
+from timeturner.settings import ReportSettings
 from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
-def get_daily_summary(day: Date, segments: list[PensiveRow]) -> DailySummary:
+def get_daily_summary(
+    day: Date,
+    segments: list[PensiveRow],
+    *,
+    report_settings: ReportSettings,
+) -> DailySummary:
     """
     Expecting segments to be sorted by start time.
     All segments should be on the same day.
@@ -44,7 +50,7 @@ def get_daily_summary(day: Date, segments: list[PensiveRow]) -> DailySummary:
             raise ValueError(
                 f"Segment is not on the given day. {day} != {segment.start.date()}"
             )
-        if "_holiday" in segment.tags:
+        if report_settings.holiday_tag in segment.tags:
             return DailySummary(
                 day=day,
                 day_type=DayType.HOLIDAY,
@@ -145,22 +151,21 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
 def list_(
     time: list[str] | None,
     *,
+    report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> list[SegmentsByDay]:
     if time is None:
         time = []
     segments_per_day = {}
     start, end = parse_list_args(time)
-    request_period = period(start, end)
-    for day in request_period.range("days"):
-        day = cast(DateTime, day)
-        segments_per_day[str(day.date())] = []
+    for day in iter_over_days(start, end):
+        segments_per_day[str(day)] = []
     rows = db.get_segments_between(start, end)
     midnight_devided_segments = list(split_segments_at_midnight(rows))
     for day, segments in groupby(midnight_devided_segments, lambda r: r.start.date()):
         segments_per_day[str(day)] = list(segments)
     daily_segments = []
-    for day in iter_over_days(request_period.start, request_period.end):
+    for day in iter_over_days(start, end):
         # request_period.range("days"):
         day = cast(DateTime, day)
         segments = segments_per_day[str(day)]
@@ -169,7 +174,11 @@ def list_(
                 day=day,
                 weekday=day.weekday(),
                 segments=segments,
-                summary=get_daily_summary(day, segments),
+                summary=get_daily_summary(
+                    day,
+                    segments,
+                    report_settings=report_settings,
+                ),
             )
         )
     return daily_segments
@@ -179,6 +188,7 @@ def add(
     time: list[str] | None,
     *,
     holiday: bool = False,
+    report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> PensiveRow:
     prefer_full_days = False
@@ -190,6 +200,7 @@ def add(
         time,
         prefer_full_days=prefer_full_days,
         holiday=holiday,
+        report_settings=report_settings,
     )
     start, end = new_segment_params.start, new_segment_params.end
 
@@ -228,6 +239,7 @@ def add(
 def end(
     time: list[str] | None,
     *,
+    report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> PensiveRow | None:
     if time is None:
@@ -256,6 +268,8 @@ def import_text(
 def import_json(
     path: Path,
     *,
+    report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> Iterator[PensiveRow]:
+    del report_settings
     return loader.import_json(db, path)

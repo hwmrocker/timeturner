@@ -28,16 +28,20 @@ def callback(
     global settings
     additional_settings_args = dict()
     if output is not None:
-        additional_settings_args["output"] = output
-    if additional_settings_args:
-        settings = TimeTurnerSettings(**additional_settings_args)
+        if output not in ("json", "rich"):
+            raise typer.BadParameter("Output must be either 'json' or 'rich'")
+        settings.report.output = output
 
 
 @app.command("l", hidden=True)
 @app.command("list")
 def _list(time: Optional[list[str]] = typer.Argument(None)):
-    data = timeturner.list_(time, db=settings.database.connection)
-    if settings.output == "json":
+    data = timeturner.list_(
+        time,
+        report_settings=settings.report,
+        db=settings.database.connection,
+    )
+    if settings.report.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
         rich_output.segments_by_day(data)
@@ -56,9 +60,10 @@ def add(
     data = timeturner.add(
         time,
         holiday=holiday,
+        report_settings=settings.report,
         db=settings.database.connection,
     )
-    if settings.output == "json":
+    if settings.report.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
         rich_output.print_pretty_record(data)
@@ -69,14 +74,24 @@ def add(
 def end(
     time: Optional[list[str]] = typer.Argument(None),
 ):
-    data = timeturner.end(time, db=settings.database.connection)
+    data = timeturner.end(
+        time,
+        report_settings=settings.report,
+        db=settings.database.connection,
+    )
     console.print_json(data=data, default=pydantic_encoder)
 
 
 @app.command("i", hidden=True)
 @app.command(name="import")
 def import_(text_file: Path):
-    data = list(timeturner.import_json(text_file, db=settings.database.connection))
+    data = list(
+        timeturner.import_json(
+            text_file,
+            report_settings=settings.report,
+            db=settings.database.connection,
+        )
+    )
     console.print_json(data=data, default=pydantic_encoder)
 
 
