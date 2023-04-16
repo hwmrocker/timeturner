@@ -2,6 +2,7 @@ import pytest
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner import models, parser
+from timeturner.helper import end_of, end_of_day
 from timeturner.settings import ReportSettings
 
 # tz_offset = pendulum.now().offset_hours
@@ -144,8 +145,8 @@ PARSE_ADD_ARGS_EXAMPLES = [
         [],
         dict(prefer_full_days=True),
         models.NewSegmentParams(
-            start=parse("1985-05-25 00:00:00"),
-            end=parse("1985-05-25 00:00:00").end_of("day"),
+            start=parse("1985-05-25"),
+            end=parse("1985-05-26"),
             tags=[],
         ),
         id="no args, prefer full days",
@@ -154,8 +155,8 @@ PARSE_ADD_ARGS_EXAMPLES = [
         ["-2d", "-", "+1d"],
         dict(prefer_full_days=True),
         models.NewSegmentParams(
-            start=parse("1985-05-23 00:00:00"),
-            end=parse("1985-05-24 00:00:00").end_of("day"),
+            start=parse("1985-05-23"),
+            end=parse("1985-05-25"),
             tags=[],
         ),
         id="no args, prefer full days",
@@ -184,8 +185,8 @@ PARSE_ADD_ARGS_EXAMPLES = [
         [],
         dict(holiday=True),
         models.NewSegmentParams(
-            start=parse("1985-05-25 00:00:00"),
-            end=parse("1985-05-25").end_of("day"),
+            start=parse("1985-05-25"),
+            end=parse("1985-05-26"),
             tags=[default_report_settings.holiday_tag],
         ),
         id="no args, holiday",
@@ -194,8 +195,8 @@ PARSE_ADD_ARGS_EXAMPLES = [
         ["@holiday"],
         dict(),
         models.NewSegmentParams(
-            start=parse("1985-05-25 00:00:00"),
-            end=parse("1985-05-25").end_of("day"),
+            start=parse("1985-05-25"),
+            end=parse("1985-05-26"),
             tags=[default_report_settings.holiday_tag],
         ),
         id="no args, @holiday",
@@ -204,8 +205,8 @@ PARSE_ADD_ARGS_EXAMPLES = [
         ["1985-05-01", "@holiday"],
         dict(),
         models.NewSegmentParams(
-            start=parse("1985-05-01 00:00:00"),
-            end=parse("1985-05-01").end_of("day"),
+            start=parse("1985-05-01"),
+            end=parse("1985-05-02"),
             tags=[default_report_settings.holiday_tag],
         ),
         id="past date, @holiday",
@@ -231,7 +232,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
     pytest.param(
         [],
         dict(),
-        (test_now.start_of("day"), test_now.end_of("day")),
+        (test_now.start_of("day"), end_of_day(test_now)),
         id="no args",
     ),
     pytest.param(
@@ -239,43 +240,43 @@ PARSE_LIST_ARGS_EXAMPLES = [
         dict(
             now=test_now.add(days=1),
         ),
-        (test_now.add(days=1).start_of("day"), test_now.add(days=1).end_of("day")),
+        (test_now.add(days=1).start_of("day"), end_of_day(test_now.add(days=1))),
         id="no args, passing now",
     ),
     pytest.param(
         ["2d"],  # checking yesterday and today
         dict(),
-        (test_now.subtract(days=1).start_of("day"), test_now.end_of("day")),
+        (test_now.subtract(days=1).start_of("day"), end_of_day(test_now)),
         id="2d",
     ),
     pytest.param(
         ["2days"],  # checking yesterday and today
         dict(),
-        (test_now.subtract(days=1).start_of("day"), test_now.end_of("day")),
+        (test_now.subtract(days=1).start_of("day"), end_of_day(test_now)),
         id="2days",
     ),
     pytest.param(
         ["week"],  # checking current week
         dict(),
-        (test_now.start_of("week"), test_now.end_of("week")),
+        (test_now.start_of("week"), end_of(test_now, "week")),
         id="week",
     ),
     pytest.param(
         ["month"],  # checking current month
         dict(),
-        (test_now.start_of("month"), test_now.end_of("month")),
+        (test_now.start_of("month"), end_of(test_now, "month")),
         id="month",
     ),
     pytest.param(
         ["year"],  # checking current year
         dict(),
-        (test_now.start_of("year"), test_now.end_of("year")),
+        (test_now.start_of("year"), end_of(test_now, "year")),
         id="year",
     ),
     pytest.param(
         ["today"],  # checking today
         dict(),
-        (test_now.start_of("day"), test_now.end_of("day")),
+        (test_now.start_of("day"), end_of_day(test_now)),
         id="today",
     ),
     pytest.param(
@@ -283,44 +284,44 @@ PARSE_LIST_ARGS_EXAMPLES = [
         dict(),
         (
             test_now.subtract(days=1).start_of("day"),
-            test_now.subtract(days=1).end_of("day"),
+            end_of_day(test_now.subtract(days=1)),
         ),
         id="yesterday",
     ),
     pytest.param(
         ["4w"],  # checking last 4 weeks
         dict(),
-        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        (test_now.subtract(weeks=3).start_of("week"), end_of(test_now, "week")),
         id="4w",
     ),
     pytest.param(
         ["4week"],  # checking last 4 weeks
         dict(),
-        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        (test_now.subtract(weeks=3).start_of("week"), end_of(test_now, "week")),
         id="4week",
     ),
     pytest.param(
         ["4weeks"],  # checking last 4 weeks
         dict(),
-        (test_now.subtract(weeks=3).start_of("week"), test_now.end_of("week")),
+        (test_now.subtract(weeks=3).start_of("week"), end_of(test_now, "week")),
         id="4weeks",
     ),
     pytest.param(
         ["4M"],  # checking last 4 months
         dict(),
-        (test_now.subtract(months=3).start_of("month"), test_now.end_of("month")),
+        (test_now.subtract(months=3).start_of("month"), end_of(test_now, "month")),
         id="4M",
     ),
     pytest.param(
         ["1y"],  # checking current year
         dict(),
-        (test_now.start_of("year"), test_now.end_of("year")),
+        (test_now.start_of("year"), end_of(test_now, "year")),
         id="1y",
     ),
     pytest.param(
         ["2years"],  # checking last and current year
         dict(),
-        (test_now.subtract(years=1).start_of("year"), test_now.end_of("year")),
+        (test_now.subtract(years=1).start_of("year"), end_of(test_now, "year")),
         id="2years",
     ),
     pytest.param(
@@ -328,7 +329,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
         dict(),
         (
             test_now.set(day=14).start_of("day"),
-            test_now.end_of("day"),
+            end_of_day(test_now),
         ),
         id="14",
     ),
@@ -337,7 +338,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
         dict(),
         (
             test_now.set(day=14, hour=12, minute=0, second=0),
-            test_now.end_of("day"),
+            end_of_day(test_now),
         ),
         id="14 12:00",
     ),
@@ -346,7 +347,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
         dict(),
         (
             test_now.set(day=8).start_of("day"),
-            test_now.set(day=12).end_of("day"),
+            end_of_day(test_now.set(day=12)),
         ),
         id="-17d - +4d",
     ),

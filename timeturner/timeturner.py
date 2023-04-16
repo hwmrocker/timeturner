@@ -9,7 +9,7 @@ from pendulum.duration import Duration
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.helper import iter_over_days
+from timeturner.helper import end_of_day, iter_over_days
 from timeturner.models import (
     DailySummary,
     DayType,
@@ -127,7 +127,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
             yield PensiveRow(
                 pk=row.pk,
                 start=row.start,
-                end=row.start.end_of("day"),
+                end=end_of_day(row.start),
                 tags=row.tags,
                 description=row.description,
                 passive=row.passive,
@@ -136,7 +136,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 if day == row.end.date():
                     end = row.end
                 else:
-                    end = day.end_of("day")
+                    end = day.add(days=1).start_of("day")
                 print(f"day: {day.start_of('day')}, end: {end}")
                 yield PensiveRow(
                     pk=row.pk,

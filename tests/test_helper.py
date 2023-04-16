@@ -17,6 +17,14 @@ ITER_OVER_DAYS_TESTS = [
         [parse("1985-05-01").date(), parse("1985-05-02").date()],
         id="two days",
     ),
+    pytest.param(
+        parse("1985-05-01"),
+        parse("1985-05-02"),
+        [
+            parse("1985-05-01").date(),
+        ],
+        id="one full day",
+    ),
 ]
 
 

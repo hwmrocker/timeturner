@@ -319,6 +319,8 @@ class DatabaseConnection:
 
         This includes segments that start before the given start time and / or end after
         the given end time.
+
+        end is exclusive, i.e. segments that end at the given end time are not included.
         """
         cursor = self.connection.cursor()
         end_is_none = end is None
@@ -327,7 +329,7 @@ class DatabaseConnection:
         cursor.execute(
             f"""
             SELECT pk, start, end, passive, description FROM {self.table_name}
-            WHERE start <= ? AND (end >= ? OR end IS NULL)
+            WHERE start <= ? AND (end > ? OR end IS NULL)
             ORDER BY start ASC
             """,
             (str(end), str(start)),

@@ -137,8 +137,8 @@ ADD_TEST_CASES = [
         ],
         [
             (
-                parse("1985-05-01 00:00:00"),
-                parse("1985-05-01").end_of("day"),
+                parse("1985-05-01"),
+                parse("1985-05-02"),
                 ["holiday"],
             ),
             (parse("1985-05-25 09:00:00"), None, []),
@@ -160,8 +160,8 @@ ADD_TEST_CASES = [
         ],
         [
             (
-                parse("1985-05-01 00:00:00"),
-                parse("1985-05-01").end_of("day"),
+                parse("1985-05-01"),
+                parse("1985-05-02"),
                 ["vacation"],
             ),
         ],
@@ -174,8 +174,8 @@ ADD_TEST_CASES = [
         ],
         [
             (
-                parse("1985-05-01 00:00:00"),
-                parse("1985-05-01").end_of("day"),
+                parse("1985-05-01"),
+                parse("1985-05-02"),
                 ["holiday"],
             ),
         ],
@@ -188,8 +188,8 @@ ADD_TEST_CASES = [
         ],
         [
             (
-                parse("1985-05-01 00:00:00"),
-                parse("1985-05-01").end_of("day"),
+                parse("1985-05-01"),
+                parse("1985-05-02"),
                 ["holiday"],
             ),
         ],
@@ -202,7 +202,7 @@ ADD_TEST_CASES = [
         ],
         [
             (parse("1985-04-20"), parse("1985-05-01"), ["vacation"]),
-            (parse("1985-05-01"), parse("1985-05-05").end_of("day"), ["holiday"]),
+            (parse("1985-05-01"), parse("1985-05-06"), ["holiday"]),
         ],
         id="move start from next segment, different prios, lower prio first",
     ),
@@ -213,7 +213,7 @@ ADD_TEST_CASES = [
         ],
         [
             (parse("1985-04-20"), parse("1985-05-01"), ["vacation"]),
-            (parse("1985-05-01"), parse("1985-05-05").end_of("day"), ["holiday"]),
+            (parse("1985-05-01"), parse("1985-05-06"), ["holiday"]),
         ],
         id="move start from next segment, different prios, higer prio first",
     ),

@@ -286,6 +286,24 @@ def test_get_segments_between(db: DatabaseConnection, start, end, expected):
     assert [row.pk for row in rows] == expected
 
 
+def test_get_segments_between_full_day_corner_case(db: DatabaseConnection):
+    db.add_segment(
+        start=datetime(1985, 5, 1, 0, 0, 0, tz="local"),
+        end=datetime(1985, 5, 2, 0, 0, 0, tz="local"),
+        tags=["holiday"],
+    )
+    db.add_segment(
+        start=datetime(1985, 5, 2, 0, 0, 0, tz="local"),
+        end=datetime(1985, 5, 3, 0, 0, 0, tz="local"),
+        tags=["vacation"],
+    )
+    rows = db.get_segments_between(
+        datetime(1985, 5, 2, 0, 0, 0, tz="local"),
+        datetime(1985, 5, 4, 0, 0, 0, tz="local"),
+    )
+    assert [row.pk for row in rows] == [2]
+
+
 def test_get_all_segments(db: DatabaseConnection):
     db.add_segment(
         start=datetime(1985, 5, 24, 7, 0, 0, tz="local"),

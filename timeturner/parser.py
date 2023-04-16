@@ -8,6 +8,7 @@ import pendulum
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
+from timeturner.helper import end_of, end_of_day
 from timeturner.models import NewSegmentParams
 from timeturner.settings import ReportSettings
 
@@ -220,9 +221,9 @@ def parse_add_args(
     if prefer_full_days:
         start = start.start_of("day")
         if not end:
-            end = start.end_of("day")
+            end = end_of_day(start)
         else:
-            end = end.end_of("day")
+            end = end_of_day(end)
     return NewSegmentParams(
         start=start,
         end=end,
@@ -239,7 +240,7 @@ def parse_list_args(
         now = pendulum.now()
     now = now.set(second=0, microsecond=0)
     start = now.start_of("day")
-    end = now.end_of("day")
+    end = end_of_day(now)
     if "-" in args:
         start, end = split_array(args, "-")
         start = single_time_parse(start, now=now)
@@ -248,7 +249,7 @@ def parse_list_args(
         if start.time() == now.time():
             start = start.start_of("day")
         if end.time() == now.time():
-            end = end.end_of("day")
+            end = end_of_day(end)
 
     elif len(args) == 0:
         pass
@@ -256,7 +257,7 @@ def parse_list_args(
         arg = args[0]
         if arg in ["week", "month", "year"]:
             start = now.start_of(arg)
-            end = now.end_of(arg)
+            end = end_of(now, arg)
         elif arg == "today":
             pass
         elif arg == "yesterday":
@@ -268,16 +269,16 @@ def parse_list_args(
                     start = start.subtract(days=int(value) - 1)
                 case {"value": value, "unit": "w" | "week" | "weeks"}:
                     start = start.start_of("week").subtract(weeks=int(value) - 1)
-                    end = now.end_of("week")
+                    end = end_of(now, "week")
                 case {"value": value, "unit": "M" | "month" | "months"}:
                     start = start.start_of("month").subtract(months=int(value) - 1)
-                    end = now.end_of("month")
+                    end = end_of(now, "month")
                 case {  # pragma: no branch
                     "value": value,
                     "unit": "y" | "year" | "years",
                 }:
                     start = start.start_of("year").subtract(years=int(value) - 1)
-                    end = now.end_of("year")
+                    end = end_of(now, "year")
 
         else:
             start = single_time_parse(args, now=now).start_of("day")
