@@ -119,6 +119,7 @@ TODOS by command:
   - [ ] allow sick days
   - [ ] allow vacation days
   - [x] allow for public holidays
+
 - [ ] end
   - [ ] add tests
 
@@ -127,19 +128,24 @@ TODOS by command:
   - [ ] allow to add aliases for commands
     - [ ] e.g. new new add alias with setting passive to true
   - [ ] add test when holiday tag name is changed in settings
+
 - [ ] list
   - [ ] split up multiday activities
+  - [ ] summaries full day tags differently
   - [x] holidays should not count as work time
     - [x] it should also not count as missing work time
   - [ ] group by year, month, week, day
   - [ ] add option to show only open activities
   - [ ] add tests
+
 - [ ] import holidays
+
 - [ ] export
   - [ ] probably like list --format jsonl
 
 - [ ] undo (revert the last change)
 - [ ] confirm changes that would modify other entries
+
 ### Design Goals
 
 - minimalistic, little to type

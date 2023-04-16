@@ -72,6 +72,7 @@ class TagSettings(BaseModel):
     name: str
     full_day: bool = False
     work_day: bool = False
+    priority: int = 0
     track_work_time: bool = False
     track_work_time_passive: bool = False
     track_break_time: bool = False
@@ -90,14 +91,22 @@ class ReportSettings(BaseModel):
         "holiday": TagSettings(
             name="holiday",
             full_day=True,
+            priority=10,
+        ),
+        "sick-certified": TagSettings(
+            name="sick-certified",
+            full_day=True,
+            priority=9,
         ),
         "vacation": TagSettings(
             name="vacation",
             full_day=True,
+            priority=8,
         ),
         "sick": TagSettings(
             name="sick",
             full_day=True,
+            priority=7,
         ),
         "travel": TagSettings(
             name="travel",
@@ -118,6 +127,10 @@ class ReportSettings(BaseModel):
             raise ValueError(
                 f"tag_settings missing required tag definition: {', '.join(missing_tags)}"
             )
+        # implement when writing tests for this
+        # for tag_name, tag in values["tag_settings"].items():
+        #     if isinstance(tag, dict):
+        #         tag["name"] = tag_name
         return values
 
 

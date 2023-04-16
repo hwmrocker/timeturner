@@ -18,7 +18,7 @@ from timeturner.models import (
     SegmentsByDay,
 )
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
-from timeturner.settings import ReportSettings
+from timeturner.settings import ReportSettings, TagSettings
 from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
@@ -191,47 +191,144 @@ def add(
     report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> PensiveRow:
-    prefer_full_days = False
     now = DateTime.now()
 
     if time is None:
         time = []
     new_segment_params = parse_add_args(
         time,
-        prefer_full_days=prefer_full_days,
         holiday=holiday,
         report_settings=report_settings,
     )
+    return _add(new_segment_params, now, report_settings=report_settings, db=db)
+
+
+def get_tag_prio(tags: list[str], tag_settings: dict[str, TagSettings]) -> int:
+    # TODO: add tests
+    # highest prio should win, not first
+    max_prio = 0
+    for tag in tags:
+        if tag in tag_settings:
+            max_prio = max(tag_settings[tag].priority, max_prio)
+    return max_prio
+
+
+def split_segment_params(
+    new_segment_params: NewSegmentParams,
+    conflicting_segment: PensiveRow,
+) -> tuple[NewSegmentParams | None, NewSegmentParams | None, NewSegmentParams | None]:
+    before = None
+    middle = None
+    after = None
+    if new_segment_params.start < conflicting_segment.start:
+        before = NewSegmentParams(
+            start=new_segment_params.start,
+            end=conflicting_segment.start,
+            tags=new_segment_params.tags,
+            description=new_segment_params.description,
+            passive=new_segment_params.passive,
+        )
+    if (
+        conflicting_segment.start <= new_segment_params.start
+        and conflicting_segment.end
+        and new_segment_params.end
+        and new_segment_params.end <= conflicting_segment.end
+    ):
+        middle = NewSegmentParams(
+            start=conflicting_segment.start,
+            end=conflicting_segment.end,
+            tags=new_segment_params.tags,
+            description=new_segment_params.description,
+            passive=new_segment_params.passive,
+        )
+    if conflicting_segment.end and (
+        (new_segment_params.end and new_segment_params.end > conflicting_segment.end)
+        or (new_segment_params.end is None)
+    ):
+        after = NewSegmentParams(
+            start=conflicting_segment.end,
+            end=new_segment_params.end,
+            tags=new_segment_params.tags,
+            description=new_segment_params.description,
+            passive=new_segment_params.passive,
+        )
+    return before, middle, after
+
+
+def _add(
+    new_segment_params: NewSegmentParams,
+    now: DateTime,
+    *,
+    report_settings: ReportSettings,
+    db: DatabaseConnection,
+):
     start, end = new_segment_params.start, new_segment_params.end
 
+    current_tag_prio = get_tag_prio(
+        new_segment_params.tags, report_settings.tag_settings
+    )
+
     conflicting_segments = db.get_segments_between(start, end)
-    for current_segment in conflicting_segments:
+    for conflicting_segment in conflicting_segments:
+        conflicting_tag_prio = get_tag_prio(
+            conflicting_segment.tags, report_settings.tag_settings
+        )
         # TODO: return a warning that other segments were changed
-        if start < current_segment.start:
-            if end and end > current_segment.start:
-                if current_segment.end and end < current_segment.end:
-                    db.update_segment(current_segment.pk, start=end)
-                elif current_segment.end and end >= current_segment.end:
-                    db.delete_segment(current_segment.pk)
+        if start <= conflicting_segment.start:
+            if end and end > conflicting_segment.start:
+                if (
+                    conflicting_segment.end and end < conflicting_segment.end
+                ) or conflicting_segment.end is None:
+                    # the conflicting segment is covering the end partially
+
+                    if conflicting_tag_prio <= current_tag_prio:
+                        db.update_segment(conflicting_segment.pk, start=end)
+                    else:
+                        new_segment_params.end = end = conflicting_segment.start
+
+                elif conflicting_segment.end and end >= conflicting_segment.end:
+                    # the conflicting segment is fully covered by the new segment
+                    if conflicting_tag_prio <= current_tag_prio:
+                        # delete the conflicting segment, because it is less important or equal
+                        db.delete_segment(conflicting_segment.pk)
+                    else:
+                        before, _, after = split_segment_params(
+                            new_segment_params, conflicting_segment
+                        )
+                        r1 = r2 = None
+                        if before:
+                            r1 = _add(
+                                before, now, db=db, report_settings=report_settings
+                            )
+                        # the conflicting middle segment has a higher prio
+                        # we don't need to add it
+                        if after:
+                            r2 = _add(
+                                after, now, db=db, report_settings=report_settings
+                            )
+                        return r1 or r2
                 else:
-                    db.update_segment(current_segment.pk, start=end)
-            elif end is None and current_segment.start < now:
-                new_segment_params.end = current_segment.start
-        elif current_segment.end is None:
-            db.update_segment(current_segment.pk, end=start)
-        elif end and start > current_segment.start and end < current_segment.end:
-            db.update_segment(current_segment.pk, end=start)
+                    # should not be possible
+                    raise ValueError("LOL")
+            elif end is None and conflicting_segment.start < now:
+                new_segment_params.end = conflicting_segment.start
+        elif conflicting_segment.end is None:
+            db.update_segment(conflicting_segment.pk, end=start)
+        elif (
+            end and start > conflicting_segment.start and end < conflicting_segment.end
+        ):
+            db.update_segment(conflicting_segment.pk, end=start)
             ret = db.add_segment(**new_segment_params.dict())
             db.add_segment(
                 end,
-                current_segment.end,
-                tags=current_segment.tags,
-                description=current_segment.description,
-                passive=current_segment.passive,
+                conflicting_segment.end,
+                tags=conflicting_segment.tags,
+                description=conflicting_segment.description,
+                passive=conflicting_segment.passive,
             )
             return ret
-        elif start < current_segment.end and start > current_segment.start:
-            db.update_segment(current_segment.pk, end=start)
+        elif start < conflicting_segment.end and start > conflicting_segment.start:
+            db.update_segment(conflicting_segment.pk, end=start)
 
     return db.add_segment(**new_segment_params.dict())
 

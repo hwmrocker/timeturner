@@ -202,12 +202,15 @@ def parse_add_args(
     report_settings: ReportSettings,
 ) -> NewSegmentParams:
     args, tags = split_filter_tags(args)
-    if report_settings.holiday_tag in tags:
-        holiday = True
     if holiday:
         if report_settings.holiday_tag not in tags:
             tags.append(report_settings.holiday_tag)
-        prefer_full_days = True
+    for tag in tags:
+        if tag not in report_settings.tag_settings:
+            continue
+        if report_settings.tag_settings[tag].full_day:
+            prefer_full_days = True
+
     start, end = split_array(args, "-")
     start = single_time_parse(start)
     if end:
