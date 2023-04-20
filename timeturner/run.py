@@ -65,7 +65,8 @@ def add(
     if settings.report.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
-        rich_output.print_pretty_record(data)
+        for segment in data:
+            rich_output.print_pretty_record(segment)
 
 
 @app.command("e", hidden=True)

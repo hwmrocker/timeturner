@@ -1,4 +1,4 @@
-from itertools import cycle, groupby
+from itertools import groupby
 from pathlib import Path
 from typing import Iterator, cast
 
@@ -188,7 +188,7 @@ def add(
     holiday: bool = False,
     report_settings: ReportSettings,
     db: DatabaseConnection,
-) -> PensiveRow | None:
+) -> list[PensiveRow]:
     now = DateTime.now()
 
     if time is None:
@@ -366,18 +366,20 @@ def _add(
                         before, _, after = split_segment_params(
                             new_segment_params, conflicting_segment
                         )
-                        r1 = r2 = None
+                        ret = []
                         if before:
-                            r1 = _add(
-                                before, now, db=db, report_settings=report_settings
+                            ret.extend(
+                                _add(
+                                    before, now, db=db, report_settings=report_settings
+                                )
                             )
                         # the conflicting middle segment has a higher prio
                         # we don't need to add it
                         if after:
-                            r2 = _add(
-                                after, now, db=db, report_settings=report_settings
+                            ret.extend(
+                                _add(after, now, db=db, report_settings=report_settings)
                             )
-                        return r1 or r2
+                        return ret
 
             elif end is None and conflicting_segment.start < now:
                 # this cannot have a higher prio
@@ -393,18 +395,21 @@ def _add(
         ):
             # new segment is in the middle of the conflicting segment
             if conflicting_tag_prio <= current_tag_prio:
+                ret = []
                 db.update_segment(conflicting_segment.pk, end=start)
-                ret = db.add_segment(**new_segment_params.dict())
-                db.add_segment(
-                    end,
-                    conflicting_segment.end,
-                    tags=conflicting_segment.tags,
-                    description=conflicting_segment.description,
-                    passive=conflicting_segment.passive,
+                ret.append(db.add_segment(**new_segment_params.dict()))
+                ret.append(
+                    db.add_segment(
+                        end,
+                        conflicting_segment.end,
+                        tags=conflicting_segment.tags,
+                        description=conflicting_segment.description,
+                        passive=conflicting_segment.passive,
+                    )
                 )
                 return ret
             else:
-                return
+                return []
         elif start < conflicting_segment.end and start > conflicting_segment.start:
             # new segment starts in the middle of the conflicting segment
             # the conficting segment has a specific end
@@ -413,7 +418,7 @@ def _add(
             else:
                 new_segment_params.start = start = conflicting_segment.end
 
-    return db.add_segment(**new_segment_params.dict())
+    return [db.add_segment(**new_segment_params.dict())]
 
 
 def end(

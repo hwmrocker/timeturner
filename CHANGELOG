@@ -8,6 +8,7 @@
 * added @vacation and @travel tags
 * added @sick tag
 * vacations will be splitted on weekends
+* add command returns a list of segments now
 
 ## 0.2.0 (2023-04-14)
 

@@ -84,7 +84,8 @@ class TagSettings(BaseModel):
     def check_tag_settings(cls, values):
         if values["track_work_time"] and values["track_work_time_passive"]:
             raise ValueError(
-                "track_work_time and track_work_time_passive cannot be set at the same time"
+                "track_work_time and track_work_time_passive "
+                "cannot be set at the same time"
             )
         if values["track_work_time"] and values["track_break_time"]:
             raise ValueError(
@@ -92,7 +93,8 @@ class TagSettings(BaseModel):
             )
         if values["track_work_time_passive"] and values["track_break_time"]:
             raise ValueError(
-                "track_work_time_passive and track_break_time cannot be set at the same time"
+                "track_work_time_passive and track_break_time "
+                "cannot be set at the same time"
             )
         if values["only_cover_work_days"] and not values["full_day"]:
             raise ValueError("only_cover_work_days can only be set if full_day is set")
