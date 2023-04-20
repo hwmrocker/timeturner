@@ -4,9 +4,16 @@ from pendulum.date import Date
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
 from timeturner import timeturner
 from timeturner.db import DatabaseConnection
-from timeturner.settings import ReportSettings
+from timeturner.settings import ReportSettings, TagSettings
 
 # pytestmark = pytest.mark.dependency(depends=["db_tests"], scope="session")
+
+default_report_settings = ReportSettings()
+default_report_settings.tag_settings["prio1"] = TagSettings(
+    name="prio1",
+    priority=1,
+)
+
 
 ADD_TEST_CASES = [
     pytest.param(
@@ -156,6 +163,15 @@ ADD_TEST_CASES = [
     ),
     pytest.param(
         [
+            ["9:00", "@travel"],
+        ],
+        [
+            (parse("1985-05-25 09:00:00"), None, ["travel"]),
+        ],
+        id="add segment with defined non full day tag",
+    ),
+    pytest.param(
+        [
             ["05-01", "@vacation"],
         ],
         [
@@ -217,6 +233,90 @@ ADD_TEST_CASES = [
         ],
         id="move start from next segment, different prios, higer prio first",
     ),
+    pytest.param(
+        [
+            ["04-30", "-", "05-05", "@vacation"],
+            ["05-01", "@holiday"],
+        ],
+        [
+            (parse("1985-04-30"), parse("1985-05-01"), ["vacation"]),
+            (parse("1985-05-01"), parse("1985-05-02"), ["holiday"]),
+            (parse("1985-05-02"), parse("1985-05-06"), ["vacation"]),
+        ],
+        id="holiday in the middle of vacation, will split it",
+    ),
+    pytest.param(
+        [
+            ["05-01", "@holiday"],
+            ["04-30", "-", "05-05", "@vacation"],
+        ],
+        [
+            (parse("1985-04-30"), parse("1985-05-01"), ["vacation"]),
+            (parse("1985-05-01"), parse("1985-05-02"), ["holiday"]),
+            (parse("1985-05-02"), parse("1985-05-06"), ["vacation"]),
+        ],
+        id="vacation around holiday, will be split",
+    ),
+    pytest.param(
+        [["12-24", "-", "12-26", "@holiday"], ["12-25", "-", "12-31", "@vacation"]],
+        [
+            (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
+            (parse("1985-12-27"), parse("1986-01-01"), ["vacation"]),
+        ],
+        id="vacation starts during holiday",
+    ),
+    pytest.param(
+        [
+            ["12-24", "-", "12-26", "@holiday"],
+            ["12-31", "-", "1986-01-01", "@holiday"],
+            ["12-25", "-", "1986-01-06", "@vacation"],
+        ],
+        [
+            (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
+            (parse("1985-12-27"), parse("1985-12-31"), ["vacation"]),
+            (parse("1985-12-31"), parse("1986-01-02"), ["holiday"]),
+            (parse("1986-01-02"), parse("1986-01-07"), ["vacation"]),
+        ],
+        id="vacation with multiple holidays",
+    ),
+    pytest.param(
+        [
+            ["12-24", "-", "12-26", "@holiday"],
+            ["12-31", "-", "1986-01-01", "@holiday"],
+            ["12-20", "-", "1986-01-06", "@vacation"],
+        ],
+        [
+            (parse("1985-12-20"), parse("1985-12-24"), ["vacation"]),
+            (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
+            (parse("1985-12-27"), parse("1985-12-31"), ["vacation"]),
+            (parse("1985-12-31"), parse("1986-01-02"), ["holiday"]),
+            (parse("1986-01-02"), parse("1986-01-07"), ["vacation"]),
+        ],
+        id="anoter vacation with multiple holidays",
+    ),
+    pytest.param(
+        [
+            ["08-01", "-", "08-05", "@holiday"],  # assume company holiday
+            [
+                "08-02",
+                "-",
+                "08-04",
+                "@vacation",
+            ],
+        ],
+        [
+            (parse("1985-08-01"), parse("1985-08-06"), ["holiday"]),
+        ],
+        id="vacation is inside company holiday",
+    ),
+    # pytest.param(
+    #     [["9:00", "-", "+3h", "@prio1"], ["11:00"]],
+    #     [
+    #         (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
+    #         (parse("1985-05-25 12:00:00"), None, []),
+    #     ],
+    #     id="move previous end, different prios",
+    # ),
 ]
 
 
@@ -224,7 +324,7 @@ ADD_TEST_CASES = [
 @freeze_time_at_1985_25_05__15_34_12
 def test_add_segment(db: DatabaseConnection, args_list, expected_start_end_times):
     for args in args_list:
-        timeturner.add(args, db=db, report_settings=ReportSettings())
+        timeturner.add(args, db=db, report_settings=default_report_settings)
     all_segments = db.get_all_segments()
     start_and_end_times = [
         (segment.start, segment.end, sorted(segment.tags)) for segment in all_segments

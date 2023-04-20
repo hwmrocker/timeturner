@@ -26,7 +26,6 @@ def callback(
     output: Optional[Output] = None,
 ):
     global settings
-    additional_settings_args = dict()
     if output is not None:
         if output not in ("json", "rich"):
             raise typer.BadParameter("Output must be either 'json' or 'rich'")

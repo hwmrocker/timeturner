@@ -61,7 +61,10 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
         total_break.append(segment.summary.break_time)
         total_over.append(segment.summary.over_time)
         if segment.summary.start:
-            start_str = f"[bold]{w[segment.day.weekday()]}[/] {segment.day} {segment.summary.start.format('HH:mm')}"
+            start_str = (
+                f"[bold]{w[segment.day.weekday()]}[/] {segment.day} "
+                f"{segment.summary.start.format('HH:mm')}"
+            )
         else:
             start_str = f"[bold]{w[segment.day.weekday()]}[/] {segment.day}"
         table.add_row(

@@ -2,7 +2,6 @@ from itertools import groupby
 from pathlib import Path
 from typing import Iterator, cast
 
-from pendulum import period
 from pendulum.date import Date
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
@@ -190,7 +189,7 @@ def add(
     holiday: bool = False,
     report_settings: ReportSettings,
     db: DatabaseConnection,
-) -> PensiveRow:
+) -> PensiveRow | None:
     now = DateTime.now()
 
     if time is None:
@@ -261,7 +260,7 @@ def _add(
     *,
     report_settings: ReportSettings,
     db: DatabaseConnection,
-):
+) -> PensiveRow | None:
     start, end = new_segment_params.start, new_segment_params.end
 
     current_tag_prio = get_tag_prio(
@@ -286,10 +285,12 @@ def _add(
                     else:
                         new_segment_params.end = end = conflicting_segment.start
 
-                elif conflicting_segment.end and end >= conflicting_segment.end:
+                else:
+                    # conflicting_segment.end and end >= conflicting_segment.end:
                     # the conflicting segment is fully covered by the new segment
                     if conflicting_tag_prio <= current_tag_prio:
-                        # delete the conflicting segment, because it is less important or equal
+                        # delete the conflicting segment, because it is less important
+                        # or equal
                         db.delete_segment(conflicting_segment.pk)
                     else:
                         before, _, after = split_segment_params(
@@ -307,28 +308,40 @@ def _add(
                                 after, now, db=db, report_settings=report_settings
                             )
                         return r1 or r2
-                else:
-                    # should not be possible
-                    raise ValueError("LOL")
+
             elif end is None and conflicting_segment.start < now:
+                # this cannot have a higher prio
+                # all high prio segments need to have defined end
                 new_segment_params.end = conflicting_segment.start
         elif conflicting_segment.end is None:
+            # current segment starts after an open ended segment
+            # we don't need to check the prio, because the conflicting segment
+            # needs to be closed any way.
             db.update_segment(conflicting_segment.pk, end=start)
         elif (
             end and start > conflicting_segment.start and end < conflicting_segment.end
         ):
-            db.update_segment(conflicting_segment.pk, end=start)
-            ret = db.add_segment(**new_segment_params.dict())
-            db.add_segment(
-                end,
-                conflicting_segment.end,
-                tags=conflicting_segment.tags,
-                description=conflicting_segment.description,
-                passive=conflicting_segment.passive,
-            )
-            return ret
+            # new segment is in the middle of the conflicting segment
+            if conflicting_tag_prio <= current_tag_prio:
+                db.update_segment(conflicting_segment.pk, end=start)
+                ret = db.add_segment(**new_segment_params.dict())
+                db.add_segment(
+                    end,
+                    conflicting_segment.end,
+                    tags=conflicting_segment.tags,
+                    description=conflicting_segment.description,
+                    passive=conflicting_segment.passive,
+                )
+                return ret
+            else:
+                return
         elif start < conflicting_segment.end and start > conflicting_segment.start:
-            db.update_segment(conflicting_segment.pk, end=start)
+            # new segment starts in the middle of the conflicting segment
+            # the conficting segment has a specific end
+            if conflicting_tag_prio <= current_tag_prio:
+                db.update_segment(conflicting_segment.pk, end=start)
+            else:
+                new_segment_params.start = start = conflicting_segment.end
 
     return db.add_segment(**new_segment_params.dict())
 

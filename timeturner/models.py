@@ -7,7 +7,6 @@ from pendulum.date import Date
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 from pendulum.parser import parse
-from pendulum.period import Period
 from pendulum.time import Time
 from pydantic import BaseModel, validator
 

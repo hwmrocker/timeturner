@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 import tomlkit
 from pendulum.duration import Duration
-from pydantic import BaseModel, BaseSettings, root_validator, validator
+from pydantic import BaseModel, BaseSettings, root_validator
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
@@ -125,7 +125,7 @@ class ReportSettings(BaseModel):
         missing_tags = required_tags - avaliable_tags
         if missing_tags:
             raise ValueError(
-                f"tag_settings missing required tag definition: {', '.join(missing_tags)}"
+                f"tag_settings missing required tags: {', '.join(missing_tags)}"
             )
         # implement when writing tests for this
         # for tag_name, tag in values["tag_settings"].items():

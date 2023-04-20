@@ -193,6 +193,16 @@ PARSE_ADD_ARGS_EXAMPLES = [
     ),
     pytest.param(
         ["@holiday"],
+        dict(holiday=True),
+        models.NewSegmentParams(
+            start=parse("1985-05-25"),
+            end=parse("1985-05-26"),
+            tags=[default_report_settings.holiday_tag],
+        ),
+        id="@holiday, with holiday=True",
+    ),
+    pytest.param(
+        ["@holiday"],
         dict(),
         models.NewSegmentParams(
             start=parse("1985-05-25"),
