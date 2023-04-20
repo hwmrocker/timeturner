@@ -1,4 +1,4 @@
-from itertools import groupby
+from itertools import cycle, groupby
 from pathlib import Path
 from typing import Iterator, cast
 
@@ -94,11 +94,10 @@ def get_daily_summary(
             work_time -= missing_break_time
             break_time += missing_break_time
 
-    required_work_duration = Duration(hours=8)
-    day_type = DayType.WORK
-    if day.weekday() >= 5:
-        required_work_duration = Duration(hours=0)
-        day_type = DayType.WEEKEND
+    required_work_duration = report_settings.worktime_per_weekday[
+        day.weekday()
+    ].duration
+    day_type = DayType.WORK if required_work_duration else DayType.WEEKEND
 
     return DailySummary(
         day=day,
@@ -254,18 +253,89 @@ def split_segment_params(
     return before, middle, after
 
 
+def split_segment_params_per_weekday(
+    new_segment_params: NewSegmentParams,
+    *,
+    report_settings: ReportSettings,
+) -> list[NewSegmentParams]:
+    ret = []
+    assert new_segment_params.end is not None
+    start, end = new_segment_params.start, new_segment_params.end
+    if report_settings.is_work_day(start):
+        condition = "work"
+    else:
+        condition = "weekend"
+    for day in iter_over_days(start, end):
+        if condition == "work":
+            if not report_settings.is_work_day(day):
+                condition = "weekend"
+                ret.append(
+                    NewSegmentParams(
+                        start=start,
+                        end=DateTime(day.year, day.month, day.day, tzinfo=start.tz),
+                        tags=new_segment_params.tags,
+                        description=new_segment_params.description,
+                        passive=new_segment_params.passive,
+                    )
+                )
+
+        else:
+            if report_settings.is_work_day(day):
+                start = DateTime(day.year, day.month, day.day, tzinfo=start.tz)
+                condition = "work"
+    if condition == "work":
+        ret.append(
+            NewSegmentParams(
+                start=start,
+                end=end,
+                tags=new_segment_params.tags,
+                description=new_segment_params.description,
+                passive=new_segment_params.passive,
+            )
+        )
+
+    return ret
+
+
 def _add(
     new_segment_params: NewSegmentParams,
     now: DateTime,
     *,
     report_settings: ReportSettings,
     db: DatabaseConnection,
-) -> PensiveRow | None:
+) -> list[PensiveRow]:
     start, end = new_segment_params.start, new_segment_params.end
 
     current_tag_prio = get_tag_prio(
         new_segment_params.tags, report_settings.tag_settings
     )
+
+    for tag in new_segment_params.tags:
+        tag_settings = report_settings.tag_settings.get(tag)
+        if tag_settings is None:
+            continue
+        if tag_settings.only_cover_work_days:
+            new_segment_params_per_weekday = split_segment_params_per_weekday(
+                new_segment_params,
+                report_settings=report_settings,
+            )
+            if len(new_segment_params_per_weekday) == 0:
+                return []
+            if len(new_segment_params_per_weekday) > 1:
+                segments = []
+                for new_segment_params in new_segment_params_per_weekday:
+                    segments.extend(
+                        _add(
+                            new_segment_params,
+                            now,
+                            db=db,
+                            report_settings=report_settings,
+                        )
+                    )
+                return segments
+
+            # we have just one segment, so we can continue
+            new_segment_params = new_segment_params_per_weekday[0]
 
     conflicting_segments = db.get_segments_between(start, end)
     for conflicting_segment in conflicting_segments:

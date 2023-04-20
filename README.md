@@ -40,11 +40,20 @@ If you forgot to track an activity in the past, you can add it with `timeturner 
 
 ### Adding a public holiday
 
-> **Warning:**
-> This is not final yet.
+To add May 1st as a public holiday, run the following command:
 
-If you want to add a public holiday, you can use the `--holiday` flag or add `@holiday` after
-the activity times when adding a new event.
+![`timeturner add 05-01 @holiday`](img/add_holiday.svg)
+
+### Adding your vacation
+
+To add your vacation, run the following command:
+
+![`timeturner add 04-25 - 05-14 @vacation`](img/add_vacation.svg)
+
+Adding your vacation will add a segments that are not part of holidays, it will also split
+weekends and only add working days as vacation.
+
+
 
 
 ## Configuration
@@ -88,7 +97,7 @@ If you forget to track a rest period, the time tracker will reduce the required 
 TODOs:
 - [ ] Add Configuration
   - [ ] ignore seconds
-  - [ ] freeze time, to generate useful images
+  - [ ] freeze time, to generate useful and pretty images for docs
   - [ ] automatic rest periods
   - [ ] default work time
   - [ ] default work week days
@@ -108,17 +117,11 @@ TODOs:
 - [ ] add test that the last release version in Changelog is the same as in pyproject.toml and app
 - [ ] README
   - [ ] auto generate config options
-- [ ] db
-  - [ ] add table for tags
 
 
 TODOS by command:
 
-- [ ] add
-  - [ ] allow passive activities
-  - [ ] allow sick days
-  - [ ] allow vacation days
-  - [x] allow for public holidays
+- [x] add
 
 - [ ] end
   - [ ] add tests
@@ -134,7 +137,7 @@ TODOS by command:
   - [ ] summaries full day tags differently
   - [x] holidays should not count as work time
     - [x] it should also not count as missing work time
-  - [ ] group by year, month, week, day
+  - [ ] group by year, month, week, daysplit up multiday activities
   - [ ] add option to show only open activities
   - [ ] add tests
 

@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import tomlkit
+from pendulum.date import Date
 from pendulum.duration import Duration
 from pydantic import BaseModel, BaseSettings, root_validator
 
@@ -76,7 +77,26 @@ class TagSettings(BaseModel):
     track_work_time: bool = False
     track_work_time_passive: bool = False
     track_break_time: bool = False
-    track_over_time: bool = False
+    # track_over_time: bool = False
+    only_cover_work_days: bool = False
+
+    @root_validator
+    def check_tag_settings(cls, values):
+        if values["track_work_time"] and values["track_work_time_passive"]:
+            raise ValueError(
+                "track_work_time and track_work_time_passive cannot be set at the same time"
+            )
+        if values["track_work_time"] and values["track_break_time"]:
+            raise ValueError(
+                "track_work_time and track_break_time cannot be set at the same time"
+            )
+        if values["track_work_time_passive"] and values["track_break_time"]:
+            raise ValueError(
+                "track_work_time_passive and track_break_time cannot be set at the same time"
+            )
+        if values["only_cover_work_days"] and not values["full_day"]:
+            raise ValueError("only_cover_work_days can only be set if full_day is set")
+        return values
 
 
 class ReportSettings(BaseModel):
@@ -86,6 +106,15 @@ class ReportSettings(BaseModel):
     # vacation_tag: str = "vacation"
     # sick_tag: str = "sick"
     # sick_certified_tag: str = "sick-certified"
+    worktime_per_weekday: dict[int, DurationSetting] = {
+        0: DurationSetting(hours=8),
+        1: DurationSetting(hours=8),
+        2: DurationSetting(hours=8),
+        3: DurationSetting(hours=8),
+        4: DurationSetting(hours=2),
+        5: DurationSetting(hours=0),
+        6: DurationSetting(hours=0),
+    }
     reset_default_work_time: bool = True
     tag_settings: dict[str, TagSettings] = {
         "holiday": TagSettings(
@@ -102,6 +131,7 @@ class ReportSettings(BaseModel):
             name="vacation",
             full_day=True,
             priority=8,
+            only_cover_work_days=True,
         ),
         "sick": TagSettings(
             name="sick",
@@ -113,6 +143,14 @@ class ReportSettings(BaseModel):
             track_work_time_passive=True,
         ),
     }
+
+    def is_work_day(self, day: Date):
+        weekday = day.weekday()
+        if not self.worktime_per_weekday:
+            return 0 <= weekday <= 4
+        if weekday in self.worktime_per_weekday:
+            return bool(self.worktime_per_weekday[weekday].duration)
+        return False
 
     @root_validator
     def validate_tag_settings(cls, values):

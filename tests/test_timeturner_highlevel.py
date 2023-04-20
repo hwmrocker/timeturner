@@ -6,7 +6,9 @@ from timeturner import timeturner
 from timeturner.db import DatabaseConnection
 from timeturner.settings import ReportSettings, TagSettings
 
-# pytestmark = pytest.mark.dependency(depends=["db_tests"], scope="session")
+# pytestmark = pytest.mark.dependency(
+#     depends=["db_tests", "timetracker_unit"], scope="session"
+# )
 
 default_report_settings = ReportSettings()
 default_report_settings.tag_settings["prio1"] = TagSettings(
@@ -213,11 +215,11 @@ ADD_TEST_CASES = [
     ),
     pytest.param(
         [
-            ["04-20", "-", "05-02", "@vacation"],
+            ["04-29", "-", "05-02", "@vacation"],
             ["05-01", "-", "05-05", "@holiday"],
         ],
         [
-            (parse("1985-04-20"), parse("1985-05-01"), ["vacation"]),
+            (parse("1985-04-29"), parse("1985-05-01"), ["vacation"]),
             (parse("1985-05-01"), parse("1985-05-06"), ["holiday"]),
         ],
         id="move start from next segment, different prios, lower prio first",
@@ -225,35 +227,35 @@ ADD_TEST_CASES = [
     pytest.param(
         [
             ["05-01", "-", "05-05", "@holiday"],
-            ["04-20", "-", "05-02", "@vacation"],
+            ["04-29", "-", "05-02", "@vacation"],
         ],
         [
-            (parse("1985-04-20"), parse("1985-05-01"), ["vacation"]),
+            (parse("1985-04-29"), parse("1985-05-01"), ["vacation"]),
             (parse("1985-05-01"), parse("1985-05-06"), ["holiday"]),
         ],
         id="move start from next segment, different prios, higer prio first",
     ),
     pytest.param(
         [
-            ["04-30", "-", "05-05", "@vacation"],
+            ["04-30", "-", "05-03", "@vacation"],
             ["05-01", "@holiday"],
         ],
         [
             (parse("1985-04-30"), parse("1985-05-01"), ["vacation"]),
             (parse("1985-05-01"), parse("1985-05-02"), ["holiday"]),
-            (parse("1985-05-02"), parse("1985-05-06"), ["vacation"]),
+            (parse("1985-05-02"), parse("1985-05-04"), ["vacation"]),
         ],
         id="holiday in the middle of vacation, will split it",
     ),
     pytest.param(
         [
             ["05-01", "@holiday"],
-            ["04-30", "-", "05-05", "@vacation"],
+            ["04-29", "-", "05-03", "@vacation"],
         ],
         [
-            (parse("1985-04-30"), parse("1985-05-01"), ["vacation"]),
+            (parse("1985-04-29"), parse("1985-05-01"), ["vacation"]),
             (parse("1985-05-01"), parse("1985-05-02"), ["holiday"]),
-            (parse("1985-05-02"), parse("1985-05-06"), ["vacation"]),
+            (parse("1985-05-02"), parse("1985-05-04"), ["vacation"]),
         ],
         id="vacation around holiday, will be split",
     ),
@@ -261,9 +263,10 @@ ADD_TEST_CASES = [
         [["12-24", "-", "12-26", "@holiday"], ["12-25", "-", "12-31", "@vacation"]],
         [
             (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
-            (parse("1985-12-27"), parse("1986-01-01"), ["vacation"]),
+            (parse("1985-12-27"), parse("1985-12-28"), ["vacation"]),
+            (parse("1985-12-30"), parse("1986-01-01"), ["vacation"]),
         ],
-        id="vacation starts during holiday",
+        id="vacation starts during holiday, including weekend",
     ),
     pytest.param(
         [
@@ -273,9 +276,11 @@ ADD_TEST_CASES = [
         ],
         [
             (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
-            (parse("1985-12-27"), parse("1985-12-31"), ["vacation"]),
+            (parse("1985-12-27"), parse("1985-12-28"), ["vacation"]),
+            (parse("1985-12-30"), parse("1985-12-31"), ["vacation"]),
             (parse("1985-12-31"), parse("1986-01-02"), ["holiday"]),
-            (parse("1986-01-02"), parse("1986-01-07"), ["vacation"]),
+            (parse("1986-01-02"), parse("1986-01-04"), ["vacation"]),
+            (parse("1986-01-06"), parse("1986-01-07"), ["vacation"]),
         ],
         id="vacation with multiple holidays",
     ),
@@ -286,13 +291,16 @@ ADD_TEST_CASES = [
             ["12-20", "-", "1986-01-06", "@vacation"],
         ],
         [
-            (parse("1985-12-20"), parse("1985-12-24"), ["vacation"]),
+            (parse("1985-12-20"), parse("1985-12-21"), ["vacation"]),
+            (parse("1985-12-23"), parse("1985-12-24"), ["vacation"]),
             (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
-            (parse("1985-12-27"), parse("1985-12-31"), ["vacation"]),
+            (parse("1985-12-27"), parse("1985-12-28"), ["vacation"]),
+            (parse("1985-12-30"), parse("1985-12-31"), ["vacation"]),
             (parse("1985-12-31"), parse("1986-01-02"), ["holiday"]),
-            (parse("1986-01-02"), parse("1986-01-07"), ["vacation"]),
+            (parse("1986-01-02"), parse("1986-01-04"), ["vacation"]),
+            (parse("1986-01-06"), parse("1986-01-07"), ["vacation"]),
         ],
-        id="anoter vacation with multiple holidays",
+        id="another vacation with multiple holidays",
     ),
     pytest.param(
         [
@@ -308,6 +316,16 @@ ADD_TEST_CASES = [
             (parse("1985-08-01"), parse("1985-08-06"), ["holiday"]),
         ],
         id="vacation is inside company holiday",
+    ),
+    pytest.param(
+        [
+            ["08-01", "-", "08-08", "@vacation"],
+        ],
+        [
+            (parse("1985-08-01"), parse("1985-08-03"), ["vacation"]),
+            (parse("1985-08-05"), parse("1985-08-09"), ["vacation"]),
+        ],
+        id="long vacation is split by weekends",
     ),
     # pytest.param(
     #     [["9:00", "-", "+3h", "@prio1"], ["11:00"]],

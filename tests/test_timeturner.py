@@ -4,7 +4,7 @@ from pendulum.time import Time
 
 from tests.helpers import parse
 from timeturner import models, timeturner
-from timeturner.models import DayType, PensiveRow
+from timeturner.models import DayType, NewSegmentParams, PensiveRow
 from timeturner.settings import ReportSettings
 
 GET_SUMMARY_TEST_CASES = [
@@ -360,3 +360,80 @@ GROUP_BY_DAY_TEST_CASES = [
 @pytest.mark.parametrize("segments, expected_grouped", GROUP_BY_DAY_TEST_CASES)
 def test_group_by_day(segments, expected_grouped):
     assert timeturner.group_by_day(segments) == expected_grouped
+
+
+SPLIT_PARAMS_BY_WEEKDAY_TEST_CASES = [
+    pytest.param(
+        parse("1985-05-01"),
+        parse("1985-05-02"),
+        [
+            (parse("1985-05-01"), parse("1985-05-02")),
+        ],
+        id="one day",
+    ),
+    pytest.param(
+        parse("1985-05-01"),
+        parse("1985-05-03"),
+        [
+            (parse("1985-05-01"), parse("1985-05-03")),
+        ],
+        id="two days, one segment",
+    ),
+    pytest.param(
+        parse("1985-05-25"),
+        parse("1985-05-26"),
+        [],
+        id="one day, on weekend",
+    ),
+    pytest.param(
+        parse("1985-05-25"),
+        parse("1985-05-27"),
+        [],
+        id="two days, on weekend",
+    ),
+    pytest.param(
+        parse("1985-05-23"),
+        parse("1985-05-29"),
+        [
+            (parse("1985-05-23"), parse("1985-05-25")),
+            (parse("1985-05-27"), parse("1985-05-29")),
+        ],
+        id="two days, on weekend",
+    ),
+    pytest.param(
+        parse("1985-05-23"),
+        parse("1985-06-07"),
+        [
+            (parse("1985-05-23"), parse("1985-05-25")),
+            (parse("1985-05-27"), parse("1985-06-01")),
+            (parse("1985-06-03"), parse("1985-06-07")),
+        ],
+        id="two weekends",
+    ),
+    pytest.param(
+        parse("1985-12-25"),
+        parse("1986-01-02"),
+        [
+            (parse("1985-12-25"), parse("1985-12-28")),
+            (parse("1985-12-30"), parse("1986-01-02")),
+        ],
+        id="one weekend, range spans year",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "start, end, expected_start_end_days", SPLIT_PARAMS_BY_WEEKDAY_TEST_CASES
+)
+def test_split_segment_params_per_weekday(start, end, expected_start_end_days):
+    segment_params = NewSegmentParams(
+        start=start, end=end, tags=["A"], passive=False, description="B"
+    )
+    split_params = timeturner.split_segment_params_per_weekday(
+        segment_params, report_settings=ReportSettings()
+    )
+    observed_start_end_days = [(params.start, params.end) for params in split_params]
+    assert observed_start_end_days == expected_start_end_days
+    assert all(s.tags == segment_params.tags for s in split_params)
+    assert all(s.passive == segment_params.passive for s in split_params)
+    assert all(s.description == segment_params.description for s in split_params)
