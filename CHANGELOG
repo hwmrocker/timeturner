@@ -12,6 +12,8 @@
 * vacations will be splitted on weekends
 * add command returns a list of segments now
 * handle travel overnights
+* passive work (travel) will be added to work time if it is not
+  adding up to more than 10 hours per day
 
 ## 0.2.0 (2023-04-14)
 
