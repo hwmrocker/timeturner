@@ -39,12 +39,40 @@ def get_daily_summary(
     vacation and holiday are not considered work time and produce no overtime
     """
     work_time = Duration()
+    passive_work_time = Duration()
     break_time = Duration()
     start = None
     end = None
     by_tag = {}
     segment = None
+    track_work_time = True
+    tags = set(tag for segment in segments for tag in segment.tags)
+
+    has_full_day_tag = report_settings.has_full_day_tags(tags)
+    if has_full_day_tag:
+        assert len(segments) == 1
+
+    track_work_time = True
+    track_break_time = False
+    track_over_time = True
+    if tags:
+        highest_priority_tag = report_settings.get_highest_priority_tag(
+            tags,
+            filter_full_day=True,
+        )
+        if highest_priority_tag.full_day:
+            track_work_time = highest_priority_tag.track_work_time
+            track_break_time = highest_priority_tag.track_break_time
+            track_over_time = highest_priority_tag.track_over_time
+
     for segment in segments:
+        worktime_is_passive = False
+        for tag in segment.tags:
+            tag_setting = report_settings.get_tag(tag)
+            if tag_setting.track_work_time_passive:
+                worktime_is_passive = True
+                break
+
         if segment.start.date() != day:
             raise ValueError(
                 f"Segment is not on the given day. {day} != {segment.start.date()}"
@@ -63,7 +91,13 @@ def get_daily_summary(
             )
         if start is None:
             start = segment.start.time()
-        work_time += segment.duration
+        if track_work_time:
+            if worktime_is_passive:
+                passive_work_time += segment.duration
+            else:
+                work_time += segment.duration
+        elif track_break_time:
+            break_time += segment.duration
         for tag in segment.tags:
             if tag not in by_tag:
                 by_tag[tag] = Duration()
@@ -94,10 +128,22 @@ def get_daily_summary(
             work_time -= missing_break_time
             break_time += missing_break_time
 
+    # only add passive work time until both add upto 10 hours
+    # everything above is ignored
+    if work_time > Duration(hours=10):
+        # we ignore passive work time
+        pass
+    elif work_time + passive_work_time > Duration(hours=10):
+        work_time = Duration(hours=10)
+    else:
+        work_time = work_time + passive_work_time
+
     required_work_duration = report_settings.worktime_per_weekday[
         day.weekday()
     ].duration
     day_type = DayType.WORK if required_work_duration else DayType.WEEKEND
+    if not track_over_time:
+        required_work_duration = Duration()
 
     return DailySummary(
         day=day,
@@ -130,12 +176,12 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 description=row.description,
                 passive=row.passive,
             )
-            for day in iter_over_days(row.start.add(days=1), row.end):
+            for day in iter_over_days(end_of_day(row.start), row.end):
                 if day == row.end.date():
                     end = row.end
                 else:
-                    end = day.add(days=1).start_of("day")
-                print(f"day: {day.start_of('day')}, end: {end}")
+                    _end = day.add(days=1)
+                    end = DateTime(_end.year, _end.month, _end.day, tzinfo=row.start.tz)
                 yield PensiveRow(
                     pk=row.pk,
                     start=DateTime(day.year, day.month, day.day, tzinfo=row.start.tz),
@@ -176,6 +222,14 @@ def list_(
                     day,
                     segments,
                     report_settings=report_settings,
+                ),
+                tags=sorted(
+                    set(
+                        tag
+                        for segment in segments
+                        for tag in segment.tags
+                        # if tag not in report_settings.ignore_tags
+                    )
                 ),
             )
         )

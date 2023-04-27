@@ -228,6 +228,156 @@ GET_SUMMARY_TEST_CASES = [
         ),
         id="segments with tags",
     ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27"),
+                end=parse("1985-05-28"),
+                tags=["sick"],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(),
+            break_time=timeturner.Duration(),
+            over_time=timeturner.Duration(),
+            start=Time(0, 0),
+            end=Time(0, 0),
+            by_tag={"sick": timeturner.Duration(hours=24)},
+        ),
+        id="sick day",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27 09:00"),
+                end=parse("1985-05-27 10:00"),
+                tags=["travel"],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(hours=1),
+            break_time=timeturner.Duration(),
+            over_time=timeturner.Duration(hours=-7),
+            start=Time(9, 0),
+            end=Time(10, 0),
+            by_tag={"travel": timeturner.Duration(hours=1)},
+        ),
+        id="one hour travel",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27 09:00"),
+                end=parse("1985-05-27 10:00"),
+                tags=["travel"],
+            ),
+            PensiveRow(
+                pk=2,
+                start=parse("1985-05-27 12:00"),
+                end=parse("1985-05-27 15:00"),
+                tags=[],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(hours=4),
+            break_time=timeturner.Duration(hours=2),
+            over_time=timeturner.Duration(hours=-4),
+            start=Time(9, 0),
+            end=Time(15, 0),
+            by_tag={"travel": timeturner.Duration(hours=1)},
+        ),
+        id="one hour travel, 3 hours work",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27 00:00"),
+                end=parse("1985-05-27 10:00"),
+                tags=["travel"],
+            ),
+            PensiveRow(
+                pk=2,
+                start=parse("1985-05-27 12:00"),
+                end=parse("1985-05-27 15:00"),
+                tags=[],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(hours=10),
+            break_time=timeturner.Duration(hours=2),
+            over_time=timeturner.Duration(hours=2),
+            start=Time(0, 0),
+            end=Time(15, 0),
+            by_tag={"travel": timeturner.Duration(hours=10)},
+        ),
+        id="10 hour travel, 3 hours work",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27 00:00"),
+                end=parse("1985-05-27 04:00"),
+                tags=["travel"],
+            ),
+            PensiveRow(
+                pk=2,
+                start=parse("1985-05-27 12:00"),
+                end=parse("1985-05-27 22:00"),
+                tags=[],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(hours=10),
+            break_time=timeturner.Duration(hours=8),
+            over_time=timeturner.Duration(hours=2),
+            start=Time(0, 0),
+            end=Time(22, 0),
+            by_tag={"travel": timeturner.Duration(hours=4)},
+        ),
+        id="4 hour travel, 10 hours work",
+    ),
+    pytest.param(
+        [
+            PensiveRow(
+                pk=1,
+                start=parse("1985-05-27 00:00"),
+                end=parse("1985-05-27 04:00"),
+                tags=["travel"],
+            ),
+            PensiveRow(
+                pk=2,
+                start=parse("1985-05-27 12:00"),
+                end=parse("1985-05-27 23:00"),
+                tags=[],
+            ),
+        ],
+        models.DailySummary(
+            day=Date(1985, 5, 27),
+            day_type=DayType.WORK,
+            work_time=timeturner.Duration(hours=11),
+            break_time=timeturner.Duration(hours=8),
+            over_time=timeturner.Duration(hours=3),
+            start=Time(0, 0),
+            end=Time(23, 0),
+            by_tag={"travel": timeturner.Duration(hours=4)},
+        ),
+        id="4 hour travel, 10 hours work",
+    ),
 ]
 
 
@@ -437,3 +587,62 @@ def test_split_segment_params_per_weekday(start, end, expected_start_end_days):
     assert all(s.tags == segment_params.tags for s in split_params)
     assert all(s.passive == segment_params.passive for s in split_params)
     assert all(s.description == segment_params.description for s in split_params)
+
+
+SPLIT_SEGMENTS_AT_MIDNIGHT_TESTS = [
+    pytest.param(
+        [],
+        [],
+        id="empty list",
+    ),
+    pytest.param(
+        [(parse("1985-05-25 00:00:00"), parse("1985-05-25 01:00:00"))],
+        [(parse("1985-05-25 00:00:00"), parse("1985-05-25 01:00:00"))],
+        id="one segment, no midnight",
+    ),
+    pytest.param(
+        [
+            (parse("1985-05-25 00:00:00"), parse("1985-05-25 01:00:00")),
+            (parse("1985-05-26 00:00:00"), parse("1985-05-26 01:00:00")),
+        ],
+        [
+            (parse("1985-05-25 00:00:00"), parse("1985-05-25 01:00:00")),
+            (parse("1985-05-26 00:00:00"), parse("1985-05-26 01:00:00")),
+        ],
+        id="two segments, no midnight",
+    ),
+    pytest.param(
+        [(parse("1985-05-25 00:00:00"), parse("1985-05-26 00:00:00"))],
+        [(parse("1985-05-25 00:00:00"), parse("1985-05-26 00:00:00"))],
+        id="one segment, full day",
+    ),
+    pytest.param(
+        [(parse("1985-05-25 12:00:00"), parse("1985-05-26 01:00:00"))],
+        [
+            (parse("1985-05-25 12:00:00"), parse("1985-05-26 00:00:00")),
+            (parse("1985-05-26 00:00:00"), parse("1985-05-26 01:00:00")),
+        ],
+        id="one segment, midnight in middle",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "start_end_list, expected_start_end_times", SPLIT_SEGMENTS_AT_MIDNIGHT_TESTS
+)
+def test_split_segments_at_midnight(start_end_list, expected_start_end_times):
+    pensive_rows = []
+    for idx, (start, end) in enumerate(start_end_list):
+        pensive_rows.append(
+            PensiveRow(
+                pk=idx,
+                start=start,
+                end=end,
+            )
+        )
+    observed_start_end_times = [
+        (row.start, row.end)
+        for row in timeturner.split_segments_at_midnight(pensive_rows)
+    ]
+
+    assert observed_start_end_times == expected_start_end_times

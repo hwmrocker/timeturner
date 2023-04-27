@@ -51,6 +51,7 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
     table.add_column("Work Time", style="dim", width=8)
     table.add_column("Break Time", style="dim", width=8)
     table.add_column("Over Time", style="dim", width=8)
+    table.add_column("Tags", style="dim", width=20)
 
     total_work = []
     total_break = []
@@ -74,6 +75,7 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
             pretty_duration(segment.summary.work_time),
             pretty_duration(segment.summary.break_time),
             pretty_duration(segment.summary.over_time),
+            ", ".join(segment.tags),
         )
     table.add_row(
         "total:",

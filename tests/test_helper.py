@@ -25,6 +25,18 @@ ITER_OVER_DAYS_TESTS = [
         ],
         id="one full day",
     ),
+    pytest.param(
+        parse("1985-05-01 14:00"),
+        parse("1985-05-01 14:00"),
+        [],
+        id="one day, same start and end",
+    ),
+    pytest.param(
+        parse("1985-05-01"),
+        parse("1985-05-01"),
+        [],
+        id="one day, start and end at midnight",
+    ),
 ]
 
 

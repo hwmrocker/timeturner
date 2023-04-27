@@ -84,6 +84,7 @@ class SegmentsByDay(BaseModel):
     weekday: int
     segments: list[PensiveRow]
     summary: DailySummary
+    tags: list[str]
 
 
 class NewSegmentParams(BaseModel):

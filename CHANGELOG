@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.1 (unreleased)
+
+## 0.3.0 (2023-04-27)
 
 * Segement Range definition changed, end is now exclusive
 * changed default holiday tag to @holiday
@@ -9,6 +11,7 @@
 * added @sick tag
 * vacations will be splitted on weekends
 * add command returns a list of segments now
+* handle travel overnights
 
 ## 0.2.0 (2023-04-14)
 

@@ -7,6 +7,8 @@ from pendulum.datetime import DateTime
 
 def iter_over_days(start: DateTime, end: DateTime) -> Iterator[Date]:
     end = end.subtract(microseconds=1)
+    if end < start:
+        return
     for dt in period(start.start_of("day"), end.start_of("day")).range("days"):
         yield cast(DateTime, dt).date()
 

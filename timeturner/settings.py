@@ -1,6 +1,6 @@
 from os import environ
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Iterable, Literal
 
 import tomlkit
 from pendulum.date import Date
@@ -77,7 +77,7 @@ class TagSettings(BaseModel):
     track_work_time: bool = False
     track_work_time_passive: bool = False
     track_break_time: bool = False
-    # track_over_time: bool = False
+    track_over_time: bool = False
     only_cover_work_days: bool = False
 
     @root_validator
@@ -98,6 +98,15 @@ class TagSettings(BaseModel):
             )
         if values["only_cover_work_days"] and not values["full_day"]:
             raise ValueError("only_cover_work_days can only be set if full_day is set")
+
+        if values["track_over_time"] and not values["track_work_time"]:
+            raise ValueError(
+                "track_over_time can only be set if track_work_time is set"
+            )
+
+        if values["track_work_time"] and values["full_day"]:
+            raise ValueError("track_work_time cannot be set if full_day is set")
+
         return values
 
 
@@ -113,7 +122,7 @@ class ReportSettings(BaseModel):
         1: DurationSetting(hours=8),
         2: DurationSetting(hours=8),
         3: DurationSetting(hours=8),
-        4: DurationSetting(hours=2),
+        4: DurationSetting(hours=8),
         5: DurationSetting(hours=0),
         6: DurationSetting(hours=0),
     }
@@ -146,13 +155,37 @@ class ReportSettings(BaseModel):
         ),
     }
 
-    def is_work_day(self, day: Date):
+    def is_work_day(self, day: Date) -> bool:
         weekday = day.weekday()
         if not self.worktime_per_weekday:
             return 0 <= weekday <= 4
         if weekday in self.worktime_per_weekday:
             return bool(self.worktime_per_weekday[weekday].duration)
         return False
+
+    def has_full_day_tags(self, tags: Iterable[str]) -> bool:
+        for tag in tags:
+            if tag in self.tag_settings and self.tag_settings[tag].full_day:
+                return True
+        return False
+
+    def get_tag(self, tag: str) -> TagSettings:
+        if tag in self.tag_settings:
+            return self.tag_settings[tag]
+        return DefaultTagSettings(
+            name=tag,
+        )
+
+    def get_highest_priority_tag(
+        self, tags: Iterable[str], filter_full_day=False
+    ) -> TagSettings:
+
+        tag_settings = [self.get_tag(tag) for tag in tags]
+        if filter_full_day:
+            tag_settings = [tag for tag in tag_settings if tag.full_day]
+        if tag_settings:
+            return max(tag_settings, key=lambda tag: tag.priority)
+        return DefaultTagSettings()
 
     @root_validator
     def validate_tag_settings(cls, values):
@@ -199,3 +232,12 @@ class TimeTurnerSettings(Settings):
                 env_settings,
                 load_config_file,
             )
+
+
+def DefaultTagSettings(name="no_tag"):
+
+    return TagSettings(
+        name=name,
+        track_work_time=True,
+        track_over_time=True,
+    )
