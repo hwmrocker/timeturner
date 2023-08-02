@@ -140,6 +140,7 @@ TODOS by command:
   - [ ] group by year, month, week, daysplit up multiday activities
   - [ ] add option to show only open activities
   - [ ] add tests
+  - [ ] MM-DD or YYYY-MM-DD should only show show a single day
 
 - [ ] import holidays
 

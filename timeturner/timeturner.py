@@ -484,7 +484,7 @@ def end(
     if time is None:
         time = []
     end = single_time_parse(time)
-    last_entry = db.get_latest_segment()
+    last_entry = db.get_latest_segment(filter_closed_segments=True)
 
     if last_entry is None:
         raise ValueError("No entries to stop")

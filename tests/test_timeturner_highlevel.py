@@ -1,5 +1,8 @@
+from functools import partial
+
 import pytest
 from pendulum.date import Date
+from pendulum.datetime import DateTime
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
 from timeturner import timeturner
@@ -17,23 +20,44 @@ default_report_settings.tag_settings["prio1"] = TagSettings(
 )
 
 
+def tt_test_case(
+    input_args: list[list[str] | tuple[str, list[str]]],
+    expected: list[tuple[DateTime, DateTime | None, list[str]]],
+    id: str,
+):
+    prepared_partials = []
+    for maybe_args in input_args:
+        if isinstance(maybe_args, tuple):
+            func_name, args = maybe_args
+        else:
+            func_name = "add"
+            args = maybe_args
+        func = getattr(timeturner, func_name)
+        prepared_partials.append(partial(func, args))
+    return pytest.param(
+        prepared_partials,
+        expected,
+        id=id,
+    )
+
+
 ADD_TEST_CASES = [
-    pytest.param(
+    tt_test_case(
         [[]],
         [(parse("1985-05-25 15:34:00"), None, [])],
         id="no time args",
     ),
-    pytest.param(
+    tt_test_case(
         [None],
         [(parse("1985-05-25 15:34:00"), None, [])],
         id="None time args",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "+3h"]],
         [(parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), [])],
         id="start with end",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "+3h"], []],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
@@ -41,7 +65,7 @@ ADD_TEST_CASES = [
         ],
         id="2nd segment",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00"], []],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 15:34:00"), []),
@@ -49,7 +73,7 @@ ADD_TEST_CASES = [
         ],
         id="auto end previous segment",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "+3h"], ["11:00"]],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 11:00:00"), []),
@@ -57,7 +81,7 @@ ADD_TEST_CASES = [
         ],
         id="move previous end",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00"], ["8:00"]],
         [
             (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:00:00"), []),
@@ -65,7 +89,7 @@ ADD_TEST_CASES = [
         ],
         id="auto end segment that happened before",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00"], ["8:00", "-", "9:30"]],
         [
             (parse("1985-05-25 09:30:00"), None, []),
@@ -73,7 +97,7 @@ ADD_TEST_CASES = [
         ],
         id="move start from next segment",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "10:00"], ["8:00", "-", "9:30"]],
         [
             (parse("1985-05-25 09:30:00"), parse("1985-05-25 10:00:00"), []),
@@ -81,14 +105,14 @@ ADD_TEST_CASES = [
         ],
         id="move start from next segment",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "9:15"], ["8:00", "-", "9:30"]],
         [
             (parse("1985-05-25 08:00:00"), parse("1985-05-25 09:30:00"), []),
         ],
         id="new segment fully overlaps previous",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "10:00"], ["8:00", "-", "8:30"]],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 10:00:00"), []),
@@ -96,7 +120,7 @@ ADD_TEST_CASES = [
         ],
         id="add segment before",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "10:00"], ["9:15", "-", "9:30"]],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 09:15:00"), []),
@@ -105,7 +129,7 @@ ADD_TEST_CASES = [
         ],
         id="new segment in middle of previous",
     ),
-    pytest.param(
+    tt_test_case(
         [["9:00", "-", "10:00"], ["10:00", "-", "11:00"], ["9:30", "-", "10:30"]],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 09:30:00"), []),
@@ -114,7 +138,7 @@ ADD_TEST_CASES = [
         ],
         id="new segment in middle of two",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["9:00", "-", "09:55"],
             ["9:55", "-", "10:05"],
@@ -128,7 +152,7 @@ ADD_TEST_CASES = [
         ],
         id="new segment in middle of two, plus overwrite",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["2000-01-01", "0:00", "-", "2000-01-01", "23:59:59"],
             ["9:00"],
@@ -139,7 +163,7 @@ ADD_TEST_CASES = [
         ],
         id="future segment, don't end new segment",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["9:00"],
             ["1985-05-01", "@holiday"],
@@ -154,7 +178,7 @@ ADD_TEST_CASES = [
         ],
         id="past day, @holiday",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["9:00", "@random_tag"],
         ],
@@ -163,7 +187,7 @@ ADD_TEST_CASES = [
         ],
         id="add segment with tag",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["9:00", "@travel"],
         ],
@@ -172,7 +196,7 @@ ADD_TEST_CASES = [
         ],
         id="add segment with defined non full day tag",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["05-01", "@vacation"],
         ],
@@ -185,7 +209,7 @@ ADD_TEST_CASES = [
         ],
         id="vacation is full day",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["05-01", "@vacation"],
             ["05-01", "@holiday"],
@@ -199,7 +223,7 @@ ADD_TEST_CASES = [
         ],
         id="holiday is overiding vacation",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["05-01", "@holiday"],
             ["05-01", "@vacation"],
@@ -213,7 +237,7 @@ ADD_TEST_CASES = [
         ],
         id="vacation can't override holiday",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["04-29", "-", "05-02", "@vacation"],
             ["05-01", "-", "05-05", "@holiday"],
@@ -224,7 +248,7 @@ ADD_TEST_CASES = [
         ],
         id="move start from next segment, different prios, lower prio first",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["05-01", "-", "05-05", "@holiday"],
             ["04-29", "-", "05-02", "@vacation"],
@@ -235,7 +259,7 @@ ADD_TEST_CASES = [
         ],
         id="move start from next segment, different prios, higer prio first",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["04-30", "-", "05-03", "@vacation"],
             ["05-01", "@holiday"],
@@ -247,7 +271,7 @@ ADD_TEST_CASES = [
         ],
         id="holiday in the middle of vacation, will split it",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["05-01", "@holiday"],
             ["04-29", "-", "05-03", "@vacation"],
@@ -259,7 +283,7 @@ ADD_TEST_CASES = [
         ],
         id="vacation around holiday, will be split",
     ),
-    pytest.param(
+    tt_test_case(
         [["12-24", "-", "12-26", "@holiday"], ["12-25", "-", "12-31", "@vacation"]],
         [
             (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
@@ -268,7 +292,7 @@ ADD_TEST_CASES = [
         ],
         id="vacation starts during holiday, including weekend",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["12-24", "-", "12-26", "@holiday"],
             ["12-31", "-", "1986-01-01", "@holiday"],
@@ -284,7 +308,7 @@ ADD_TEST_CASES = [
         ],
         id="vacation with multiple holidays",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["12-24", "-", "12-26", "@holiday"],
             ["12-31", "-", "1986-01-01", "@holiday"],
@@ -302,7 +326,7 @@ ADD_TEST_CASES = [
         ],
         id="another vacation with multiple holidays",
     ),
-    pytest.param(
+    tt_test_case(
         [
             ["08-01", "-", "08-05", "@holiday"],  # assume company holiday
             [
@@ -317,9 +341,9 @@ ADD_TEST_CASES = [
         ],
         id="vacation is inside company holiday",
     ),
-    pytest.param(
+    tt_test_case(
         [
-            ["08-01", "-", "08-08", "@vacation"],
+            ("add", ["08-01", "-", "08-08", "@vacation"]),
         ],
         [
             (parse("1985-08-01"), parse("1985-08-03"), ["vacation"]),
@@ -327,7 +351,19 @@ ADD_TEST_CASES = [
         ],
         id="long vacation is split by weekends",
     ),
-    # pytest.param(
+    tt_test_case(
+        [
+            ["08-01", "@vacation"],  # one vacation day in the future
+            ["07:00"],  # start of work day
+            ("end", ["12:00"]),  # end of work day
+        ],
+        [
+            (parse("1985-05-25 07:00"), parse("1985-05-25 12:00:00"), []),
+            (parse("1985-08-01"), parse("1985-08-02"), ["vacation"]),
+        ],
+        id="vacation in the future should not affect end function",
+    ),
+    # test_case_builder(
     #     [["9:00", "-", "+3h", "@prio1"], ["11:00"]],
     #     [
     #         (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
@@ -338,11 +374,15 @@ ADD_TEST_CASES = [
 ]
 
 
-@pytest.mark.parametrize("args_list, expected_start_end_times", ADD_TEST_CASES)
+@pytest.mark.parametrize("partial_functions, expected_start_end_times", ADD_TEST_CASES)
 @freeze_time_at_1985_25_05__15_34_12
-def test_add_segment(db: DatabaseConnection, args_list, expected_start_end_times):
-    for args in args_list:
-        timeturner.add(args, db=db, report_settings=default_report_settings)
+def test_add_segment(
+    db: DatabaseConnection,
+    partial_functions,
+    expected_start_end_times,
+):
+    for func in partial_functions:
+        func(db=db, report_settings=default_report_settings)
     all_segments = db.get_all_segments()
     start_and_end_times = [
         (segment.start, segment.end, sorted(segment.tags)) for segment in all_segments

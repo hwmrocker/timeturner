@@ -250,11 +250,15 @@ class DatabaseConnection:
 
         self.connection.commit()
 
-    def get_latest_segment(self) -> PensiveRow | None:
+    def get_latest_segment(self, filter_closed_segments=False) -> PensiveRow | None:
         cursor = self.connection.cursor()
+        where_clause = ""
+        if filter_closed_segments:
+            where_clause = "WHERE end IS NULL"
         cursor.execute(
             f"""
             SELECT pk, start, end, passive, description FROM {self.table_name}
+            {where_clause}
             ORDER BY start DESC LIMIT 1
             """
         )
