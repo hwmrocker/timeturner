@@ -8,7 +8,7 @@ from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 from pendulum.parser import parse
 from pendulum.time import Time
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class DayType(Enum):
@@ -29,6 +29,10 @@ class DailySummary(BaseModel):
     description: str | None = None
     by_tag: dict[str, Duration] = {}
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
+
 
 class TimeSegment(BaseModel):
     start: DateTime
@@ -37,7 +41,12 @@ class TimeSegment(BaseModel):
     tags: list[str] = []
     description: str | None = None
 
-    @validator("start")
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
+
+    @field_validator("start")
+    @classmethod
     def parse_start(cls, value: str | datetime | DateTime) -> DateTime:
         if isinstance(value, DateTime):
             return value
@@ -48,13 +57,15 @@ class TimeSegment(BaseModel):
             return new_value
         raise ValueError(f"Could not parse {value} as a datetime")
 
-    @validator("end")
+    @field_validator("end")
+    @classmethod
     def parse_end(cls, value: str | datetime | DateTime | None) -> DateTime | None:
         if value is None:
             return None
         return cls.parse_start(value)
 
-    @validator("tags")
+    @field_validator("tags")
+    @classmethod
     def parse_tags(cls, value: str | list[str] | None) -> list[str] | None:
         if not value:
             # we want to return a new empty list, not reuse the default empty list
@@ -86,10 +97,18 @@ class SegmentsByDay(BaseModel):
     summary: DailySummary
     tags: list[str]
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
+
 
 class NewSegmentParams(BaseModel):
     start: DateTime
-    end: Optional[DateTime]
+    end: Optional[DateTime] = None
     tags: list[str]
     description: str = ""
     passive: bool = False
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )

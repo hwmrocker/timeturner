@@ -5,7 +5,8 @@ from typing import Any, Iterable, Literal
 import tomlkit
 from pendulum.date import Date
 from pendulum.duration import Duration
-from pydantic import BaseModel, BaseSettings, root_validator
+from pydantic import BaseModel, root_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
@@ -23,9 +24,9 @@ class Settings(BaseSettings):
     def config_path(self) -> Path:
         return self.config_home / self.config_file
 
-    class Config:
-        env_file_encoding = "utf-8"
-        env_prefix = "timeturner_"
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8", env_prefix="timeturner_"
+    )
 
 
 config_settings = Settings()
@@ -80,7 +81,7 @@ class TagSettings(BaseModel):
     track_over_time: bool = False
     only_cover_work_days: bool = False
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_tag_settings(cls, values):
         if values["track_work_time"] and values["track_work_time_passive"]:
             raise ValueError(
@@ -179,7 +180,6 @@ class ReportSettings(BaseModel):
     def get_highest_priority_tag(
         self, tags: Iterable[str], filter_full_day=False
     ) -> TagSettings:
-
         tag_settings = [self.get_tag(tag) for tag in tags]
         if filter_full_day:
             tag_settings = [tag for tag in tag_settings if tag.full_day]
@@ -187,9 +187,8 @@ class ReportSettings(BaseModel):
             return max(tag_settings, key=lambda tag: tag.priority)
         return DefaultTagSettings()
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_tag_settings(cls, values):
-
         avaliable_tags = set(values["tag_settings"].keys())
         required_tags = {
             values["holiday_tag"],
@@ -214,6 +213,8 @@ class TimeTurnerSettings(Settings):
     version: str = __VERSION__
     commit: str = __COMMIT__
 
+    # TODO[pydantic]: We couldn't refactor this class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config:
         env_file_encoding = "utf-8"
         env_prefix = "timeturner_"
@@ -235,7 +236,6 @@ class TimeTurnerSettings(Settings):
 
 
 def DefaultTagSettings(name="no_tag"):
-
     return TagSettings(
         name=name,
         track_work_time=True,
