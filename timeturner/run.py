@@ -34,7 +34,10 @@ def callback(
 
 @app.command("l", hidden=True)
 @app.command("list")
-def _list(time: Optional[list[str]] = typer.Argument(None)):
+def _list(
+    time: Optional[list[str]] = typer.Argument(None),
+    show_all: bool = False,
+):
     data = timeturner.list_(
         time,
         report_settings=settings.report,
@@ -43,7 +46,10 @@ def _list(time: Optional[list[str]] = typer.Argument(None)):
     if settings.report.output == "json":
         console.print_json(data=data, default=pydantic_encoder)
     else:
-        rich_output.segments_by_day(data)
+        rich_output.segments_by_day(
+            data,
+            show_all=show_all,
+        )
 
 
 @app.command("a", hidden=True)

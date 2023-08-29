@@ -36,7 +36,10 @@ def pretty_duration(duration: Duration, breaks: Duration = Duration()) -> str:
     return _pretty_duration(duration)
 
 
-def segments_by_day(segments: list[SegmentsByDay]) -> None:
+def segments_by_day(
+    segments: list[SegmentsByDay],
+    show_all: bool = False,
+) -> None:
     table = Table(
         title="Segments",
         show_header=True,
@@ -77,6 +80,22 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
             pretty_duration(segment.summary.over_time),
             ", ".join(segment.tags),
         )
+        if show_all:
+            for sub_segment in segment.segments:
+                start_str: str = (
+                    " " * 15
+                    + f"[white]{sub_segment.start.format('HH:mm') if sub_segment.start else ''}[/]"
+                )
+                table.add_row(
+                    start_str,
+                    sub_segment.end.format("HH:mm") if sub_segment.end else "",
+                    "work" if not sub_segment.passive else "break",
+                    pretty_duration(sub_segment.duration),
+                    "",
+                    "",
+                    ", ".join(sub_segment.tags),
+                )
+                start_str = ""
     table.add_row(
         "total:",
         "",
