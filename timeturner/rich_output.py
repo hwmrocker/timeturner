@@ -83,8 +83,9 @@ def segments_by_day(
         if show_all:
             for sub_segment in segment.segments:
                 start_str: str = (
-                    " " * 15
-                    + f"[white]{sub_segment.start.format('HH:mm') if sub_segment.start else ''}[/]"
+                    (" " * 15 + f"[white]{sub_segment.start.format('HH:mm')}[/]")
+                    if sub_segment.start
+                    else ""
                 )
                 table.add_row(
                     start_str,
