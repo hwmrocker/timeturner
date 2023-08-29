@@ -48,7 +48,7 @@ ADD_TEST_CASES = [
         id="no time args",
     ),
     tt_test_case(
-        [None],
+        [None],  # type: ignore
         [(parse("1985-05-25 15:34:00"), None, [])],
         id="None time args",
     ),

@@ -12,7 +12,7 @@ def parse(date_string) -> DateTime:
 
 freeze_time_at_1985_25_05__15_34_12 = freeze_time(
     "1985-05-25 15:34:12",
-    tz_offset=-int(parse("1985-05-25 15:34:12").offset_hours),
+    tz_offset=-int(parse("1985-05-25 15:34:12").offset_hours),  # type: ignore
 )
 
 test_now = parse("1985-05-25 15:34:12")
