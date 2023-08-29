@@ -233,7 +233,7 @@ def test_parse_add_args(args, kwargs, expected):
     add_kwargs.update(kwargs)
     observed = parser.parse_add_args(
         args,
-        **add_kwargs,
+        **add_kwargs,  # type: ignore
     )
     assert observed == expected
 

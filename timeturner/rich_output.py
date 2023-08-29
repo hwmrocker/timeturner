@@ -81,9 +81,9 @@ def segments_by_day(segments: list[SegmentsByDay]) -> None:
         "total:",
         "",
         "",
-        pretty_duration(sum(total_work, Duration())),
-        pretty_duration(sum(total_break, Duration())),
-        pretty_duration(sum(total_over, Duration())),
+        pretty_duration(sum(total_work, Duration())),  # type: ignore
+        pretty_duration(sum(total_break, Duration())),  # type: ignore
+        pretty_duration(sum(total_over, Duration())),  # type: ignore
     )
 
     console.print(table)
