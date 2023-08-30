@@ -4,11 +4,12 @@ from typing import Optional, cast
 
 import pendulum
 from pendulum.date import Date
-from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 from pendulum.parser import parse
 from pendulum.time import Time
 from pydantic import BaseModel, validator
+
+from timeturner.helper import DateTime
 
 
 class DayType(Enum):

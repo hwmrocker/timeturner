@@ -1,17 +1,18 @@
+from datetime import datetime
 from pathlib import Path
 from typing import cast
 
 import pytest
-from pendulum.datetime import DateTime
 from pendulum.parser import parse as _parse
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
+from timeturner.helper import DateTime
 from timeturner.models import TimeSegment
 
 
 def parse(s: str) -> DateTime:
-    return cast(DateTime, _parse(s, strict=False))
+    return cast(DateTime, _parse(s))
 
 
 SINGLE_TIME_SEGMENT_DATA = [

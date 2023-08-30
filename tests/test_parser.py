@@ -319,7 +319,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
     pytest.param(
         ["4M"],  # checking last 4 months
         dict(),
-        (test_now.subtract(months=3).start_of("month"), end_of(test_now, "month")),
+        (test_now.replace(month=2).start_of("month"), end_of(test_now, "month")),
         id="4M",
     ),
     pytest.param(
@@ -331,14 +331,14 @@ PARSE_LIST_ARGS_EXAMPLES = [
     pytest.param(
         ["2years"],  # checking last and current year
         dict(),
-        (test_now.subtract(years=1).start_of("year"), end_of(test_now, "year")),
+        (test_now.replace(year=1984).start_of("year"), end_of(test_now, "year")),
         id="2years",
     ),
     pytest.param(
         ["14"],  # checking since the 14th of the current month
         dict(),
         (
-            test_now.set(day=14).start_of("day"),
+            test_now.replace(day=14).start_of("day"),
             end_of_day(test_now),
         ),
         id="14",
@@ -347,7 +347,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
         ["14", "12:00"],  # checking since the 14th of the current month
         dict(),
         (
-            test_now.set(day=14, hour=12, minute=0, second=0),
+            test_now.replace(day=14, hour=12, minute=0, second=0),
             end_of_day(test_now),
         ),
         id="14 12:00",
@@ -356,8 +356,8 @@ PARSE_LIST_ARGS_EXAMPLES = [
         ["-17d", "-", "+4d"],  # checking since the 14th of the current month
         dict(),
         (
-            test_now.set(day=8).start_of("day"),
-            end_of_day(test_now.set(day=12)),
+            test_now.replace(day=8).start_of("day"),
+            end_of_day(test_now.replace(day=12)),
         ),
         id="-17d - +4d",
     ),
@@ -371,8 +371,8 @@ PARSE_LIST_ARGS_EXAMPLES = [
         ],  # checking since the 14th of the current month
         dict(),
         (
-            test_now.start_of("day").set(day=8, hour=7),
-            test_now.start_of("day").set(day=12, hour=18),
+            test_now.start_of("day").replace(day=8, hour=7),
+            test_now.start_of("day").replace(day=12, hour=18),
         ),
         id="-17d 7:00 - +4d 18:00",
     ),

@@ -17,8 +17,7 @@ It has the following columns:
 import sqlite3
 from typing import Any, Optional, cast
 
-from pendulum.datetime import DateTime
-
+from timeturner.helper import DateTime
 from timeturner.models import PensiveRow
 
 

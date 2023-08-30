@@ -2,10 +2,10 @@ import re
 from pathlib import Path
 from typing import Iterator, cast
 
-from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
 from timeturner.db import DatabaseConnection
+from timeturner.helper import DateTime
 from timeturner.models import PensiveRow, TimeSegment
 
 re_date = re.compile(r"^\d{4}-\d{2}-\d{2}")
