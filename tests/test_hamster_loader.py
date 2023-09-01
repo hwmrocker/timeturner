@@ -3,16 +3,11 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from pendulum.parser import parse as _parse
 
+from tests.helpers import parse
 from timeturner import loader
 from timeturner.db import DatabaseConnection
 from timeturner.models import TimeSegment
-
-
-def parse(s: str) -> datetime:
-    return cast(datetime, _parse(s))
-
 
 SINGLE_TIME_SEGMENT_DATA = [
     pytest.param(

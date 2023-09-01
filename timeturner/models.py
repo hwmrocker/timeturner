@@ -1,10 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from enum import Enum, auto
 from typing import Optional, cast
 
-import pendulum
-from pendulum.duration import Duration
-from pendulum.time import Time
 from pydantic import BaseModel, validator
 
 from timeturner.helper import now_with_tz
@@ -20,13 +17,13 @@ class DayType(Enum):
 class DailySummary(BaseModel):
     day: date
     day_type: DayType = DayType.WORK
-    work_time: Duration = Duration()
-    break_time: Duration = Duration()
-    over_time: Duration = Duration()
-    start: Optional[Time] = None
-    end: Optional[Time] = None
+    work_time: timedelta = timedelta()
+    break_time: timedelta = timedelta()
+    over_time: timedelta = timedelta()
+    start: Optional[time] = None
+    end: Optional[time] = None
     description: str | None = None
-    by_tag: dict[str, Duration] = {}
+    by_tag: dict[str, timedelta] = {}
 
 
 class TimeSegment(BaseModel):
@@ -63,11 +60,11 @@ class TimeSegment(BaseModel):
         raise ValueError(f"Could not parse {value} as a list of tags")
 
     @property
-    def duration(self) -> Duration:
+    def duration(self) -> timedelta:
         if self.end is None:
-            duration = cast(Duration, now_with_tz() - self.start)
+            duration = cast(timedelta, now_with_tz() - self.start)
         else:
-            duration = cast(Duration, self.end - self.start)
+            duration = cast(timedelta, self.end - self.start)
 
         return duration
 

@@ -1,10 +1,9 @@
-from datetime import date
+from datetime import date, timedelta
 from os import environ
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
 import tomlkit
-from pendulum.duration import Duration
 from pydantic import BaseModel, BaseSettings, root_validator
 
 from timeturner import __COMMIT__, __VERSION__
@@ -62,8 +61,8 @@ class DurationSetting(BaseModel):
     minutes: int = 0
 
     @property
-    def duration(self) -> Duration:
-        return Duration(
+    def duration(self) -> timedelta:
+        return timedelta(
             hours=self.hours,
             minutes=self.minutes,
         )

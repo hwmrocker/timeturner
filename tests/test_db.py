@@ -2,7 +2,6 @@ from datetime import datetime
 from itertools import combinations
 
 import pytest
-from pendulum.parser import parse
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner.db import DatabaseConnection

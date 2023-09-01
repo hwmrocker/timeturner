@@ -1,4 +1,5 @@
-from pendulum.duration import Duration
+from datetime import timedelta
+
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -8,7 +9,7 @@ from timeturner.models import PensiveRow, SegmentsByDay
 console = Console()
 
 
-def _pretty_duration(duration: Duration) -> str:
+def _pretty_duration(duration: timedelta) -> str:
     a = ""
     if duration.seconds < 0:
         # return "NEGATIVE TIME"
@@ -30,7 +31,7 @@ def _pretty_duration(duration: Duration) -> str:
     return a + str(" ".join(parts))
 
 
-def pretty_duration(duration: Duration, breaks: Duration = Duration()) -> str:
+def pretty_duration(duration: timedelta, breaks: timedelta = timedelta()) -> str:
     if breaks:
         return f"{_pretty_duration(duration)} (+{_pretty_duration(breaks)} break)"
     return _pretty_duration(duration)
@@ -101,9 +102,9 @@ def segments_by_day(
         "total:",
         "",
         "",
-        pretty_duration(sum(total_work, Duration())),  # type: ignore
-        pretty_duration(sum(total_break, Duration())),  # type: ignore
-        pretty_duration(sum(total_over, Duration())),  # type: ignore
+        pretty_duration(sum(total_work, timedelta())),  # type: ignore
+        pretty_duration(sum(total_break, timedelta())),  # type: ignore
+        pretty_duration(sum(total_over, timedelta())),  # type: ignore
     )
 
     console.print(table)

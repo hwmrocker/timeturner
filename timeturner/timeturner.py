@@ -1,9 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from itertools import groupby
 from pathlib import Path
 from typing import Iterator, cast
-
-from pendulum.duration import Duration
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
@@ -37,9 +35,9 @@ def get_daily_summary(
 
     vacation and holiday are not considered work time and produce no overtime
     """
-    work_time = Duration()
-    passive_work_time = Duration()
-    break_time = Duration()
+    work_time = timedelta()
+    passive_work_time = timedelta()
+    break_time = timedelta()
     start = None
     end = None
     by_tag = {}
@@ -80,9 +78,9 @@ def get_daily_summary(
             return DailySummary(
                 day=day,
                 day_type=DayType.HOLIDAY,
-                work_time=Duration(),
-                break_time=Duration(),
-                over_time=Duration(),
+                work_time=timedelta(),
+                break_time=timedelta(),
+                over_time=timedelta(),
                 start=None,
                 end=None,
                 description="Holiday",
@@ -99,7 +97,7 @@ def get_daily_summary(
             break_time += segment.duration
         for tag in segment.tags:
             if tag not in by_tag:
-                by_tag[tag] = Duration()
+                by_tag[tag] = timedelta()
             by_tag[tag] += segment.duration
 
     if segment and segment.end is not None:
@@ -109,31 +107,31 @@ def get_daily_summary(
             raise ValueError(
                 "Segment has no end time but is followed by another segment."
             )
-        new_break = cast(Duration, next_segment.start - segment.end)
-        if new_break > Duration(minutes=1):
+        new_break = cast(timedelta, next_segment.start - segment.end)
+        if new_break > timedelta(minutes=1):
             break_time += new_break
         else:
             # Short breaks are not counted as breaks.
             work_time += new_break
 
-    if work_time > Duration(hours=6, minutes=15):
-        if break_time < Duration(minutes=45):
-            missing_break_time = Duration(minutes=45) - break_time
+    if work_time > timedelta(hours=6, minutes=15):
+        if break_time < timedelta(minutes=45):
+            missing_break_time = timedelta(minutes=45) - break_time
             work_time -= missing_break_time
             break_time += missing_break_time
-    elif work_time > Duration(hours=4):
-        if break_time < Duration(minutes=15):
-            missing_break_time = Duration(minutes=15) - break_time
+    elif work_time > timedelta(hours=4):
+        if break_time < timedelta(minutes=15):
+            missing_break_time = timedelta(minutes=15) - break_time
             work_time -= missing_break_time
             break_time += missing_break_time
 
     # only add passive work time until both add upto 10 hours
     # everything above is ignored
-    if work_time > Duration(hours=10):
+    if work_time > timedelta(hours=10):
         # we ignore passive work time
         pass
-    elif work_time + passive_work_time > Duration(hours=10):
-        work_time = Duration(hours=10)
+    elif work_time + passive_work_time > timedelta(hours=10):
+        work_time = timedelta(hours=10)
     else:
         work_time = work_time + passive_work_time
 
@@ -142,7 +140,7 @@ def get_daily_summary(
     ].duration
     day_type = DayType.WORK if required_work_duration else DayType.WEEKEND
     if not track_over_time:
-        required_work_duration = Duration()
+        required_work_duration = timedelta()
 
     return DailySummary(
         day=day,

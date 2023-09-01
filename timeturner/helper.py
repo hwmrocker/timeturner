@@ -104,3 +104,9 @@ local_tz = datetime.now(timezone.utc).astimezone().tzinfo
 def now_with_tz(tz=local_tz):
     print(f"tz: {tz}")
     return datetime.now(tz)
+
+
+def parse(date_string) -> datetime:
+    """Parse a date string and adding the local timezone."""
+    dt = datetime.fromisoformat(date_string)
+    return dt.replace(tzinfo=local_tz)
