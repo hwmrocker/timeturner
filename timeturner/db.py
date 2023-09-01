@@ -15,9 +15,9 @@ It has the following columns:
 """
 
 import sqlite3
+from datetime import datetime
 from typing import Any, Optional, cast
 
-from timeturner.helper import DateTime
 from timeturner.models import PensiveRow
 
 
@@ -80,8 +80,8 @@ class DatabaseConnection:
 
     def add_segment(
         self,
-        start: DateTime,
-        end: DateTime | None = None,
+        start: datetime,
+        end: datetime | None = None,
         passive: bool | None = False,
         tags: list[str] | None = None,
         description: str | None = None,
@@ -160,8 +160,8 @@ class DatabaseConnection:
     def update_segment(
         self,
         pk: int,
-        start: DateTime | Sentinel = sentinel,
-        end: DateTime | None | Sentinel = sentinel,
+        start: datetime | Sentinel = sentinel,
+        end: datetime | None | Sentinel = sentinel,
         passive: bool | None | Sentinel = sentinel,
         tags: list[str] | None | Sentinel = sentinel,
         description: str | None | Sentinel = sentinel,
@@ -314,8 +314,8 @@ class DatabaseConnection:
 
     def get_segments_between(
         self,
-        start: DateTime,
-        end: Optional[DateTime] = None,
+        start: datetime,
+        end: Optional[datetime] = None,
     ) -> list[PensiveRow]:
         """
         Get all segments between the given start and end times.

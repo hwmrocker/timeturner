@@ -1,9 +1,9 @@
+from datetime import date
 from os import environ
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
 import tomlkit
-from pendulum.date import Date
 from pendulum.duration import Duration
 from pydantic import BaseModel, BaseSettings, root_validator
 
@@ -80,7 +80,7 @@ class TagSettings(BaseModel):
     track_over_time: bool = False
     only_cover_work_days: bool = False
 
-    @root_validator
+    @root_validator(allow_reuse=True)
     def check_tag_settings(cls, values):
         if values["track_work_time"] and values["track_work_time_passive"]:
             raise ValueError(
@@ -155,7 +155,7 @@ class ReportSettings(BaseModel):
         ),
     }
 
-    def is_work_day(self, day: Date) -> bool:
+    def is_work_day(self, day: date) -> bool:
         weekday = day.weekday()
         if not self.worktime_per_weekday:
             return 0 <= weekday <= 4
@@ -179,7 +179,6 @@ class ReportSettings(BaseModel):
     def get_highest_priority_tag(
         self, tags: Iterable[str], filter_full_day=False
     ) -> TagSettings:
-
         tag_settings = [self.get_tag(tag) for tag in tags]
         if filter_full_day:
             tag_settings = [tag for tag in tag_settings if tag.full_day]
@@ -189,7 +188,6 @@ class ReportSettings(BaseModel):
 
     @root_validator
     def validate_tag_settings(cls, values):
-
         avaliable_tags = set(values["tag_settings"].keys())
         required_tags = {
             values["holiday_tag"],
@@ -235,7 +233,6 @@ class TimeTurnerSettings(Settings):
 
 
 def DefaultTagSettings(name="no_tag"):
-
     return TagSettings(
         name=name,
         track_work_time=True,

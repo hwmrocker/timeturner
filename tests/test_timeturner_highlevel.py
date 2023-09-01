@@ -1,8 +1,7 @@
+from datetime import date, datetime
 from functools import partial
 
 import pytest
-from pendulum.date import Date
-from pendulum.datetime import DateTime
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
 from timeturner import timeturner
@@ -22,7 +21,7 @@ default_report_settings.tag_settings["prio1"] = TagSettings(
 
 def tt_test_case(
     input_args: list[list[str] | tuple[str, list[str]]],
-    expected: list[tuple[DateTime, DateTime | None, list[str]]],
+    expected: list[tuple[datetime, datetime | None, list[str]]],
     id: str,
 ):
     prepared_partials = []
@@ -400,27 +399,27 @@ LIST_SEGMENTS_TESTS = [
     pytest.param(
         [],
         [
-            Date(1985, 5, 25),
+            date(1985, 5, 25),
         ],
         id="no time args",
     ),
     pytest.param(
         None,
         [
-            Date(1985, 5, 25),
+            date(1985, 5, 25),
         ],
         id="no time args",
     ),
     pytest.param(
         ["week"],
         [
-            Date(1985, 5, 20),
-            Date(1985, 5, 21),
-            Date(1985, 5, 22),
-            Date(1985, 5, 23),
-            Date(1985, 5, 24),
-            Date(1985, 5, 25),
-            Date(1985, 5, 26),
+            date(1985, 5, 20),
+            date(1985, 5, 21),
+            date(1985, 5, 22),
+            date(1985, 5, 23),
+            date(1985, 5, 24),
+            date(1985, 5, 25),
+            date(1985, 5, 26),
         ],
         id="week",
     ),

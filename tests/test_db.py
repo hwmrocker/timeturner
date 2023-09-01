@@ -2,8 +2,6 @@ from itertools import combinations
 
 import pytest
 from pendulum import datetime
-
-# from pendulum.datetime import DateTime
 from pendulum.parser import parse
 
 from timeturner.db import DatabaseConnection

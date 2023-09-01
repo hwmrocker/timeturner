@@ -1,5 +1,6 @@
+from datetime import date
+
 import pytest
-from pendulum.date import Date
 from pendulum.time import Time
 
 from tests.helpers import parse
@@ -11,7 +12,7 @@ GET_SUMMARY_TEST_CASES = [
     pytest.param(
         [],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(),
             break_time=timeturner.Duration(),
@@ -29,7 +30,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=1),
             break_time=timeturner.Duration(),
@@ -53,7 +54,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=2),
             break_time=timeturner.Duration(),
@@ -77,7 +78,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=2),
             break_time=timeturner.Duration(),
@@ -101,7 +102,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=1, minutes=59),
             break_time=timeturner.Duration(hours=1, minutes=1),
@@ -125,7 +126,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=8, minutes=0),
             break_time=timeturner.Duration(hours=1, minutes=0),
@@ -144,7 +145,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=8, minutes=15),
             break_time=timeturner.Duration(minutes=45),
@@ -163,7 +164,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=4, minutes=45),
             break_time=timeturner.Duration(minutes=15),
@@ -187,7 +188,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=4, minutes=30),
             break_time=timeturner.Duration(minutes=30),
@@ -213,7 +214,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 25),
+            day=date(1985, 5, 25),
             day_type=DayType.WEEKEND,
             work_time=timeturner.Duration(hours=4, minutes=30),
             break_time=timeturner.Duration(minutes=30),
@@ -238,7 +239,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(),
             break_time=timeturner.Duration(),
@@ -259,7 +260,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(hours=1),
             break_time=timeturner.Duration(),
@@ -286,7 +287,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(hours=4),
             break_time=timeturner.Duration(hours=2),
@@ -313,7 +314,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(hours=10),
             break_time=timeturner.Duration(hours=2),
@@ -340,7 +341,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(hours=10),
             break_time=timeturner.Duration(hours=8),
@@ -367,7 +368,7 @@ GET_SUMMARY_TEST_CASES = [
             ),
         ],
         models.DailySummary(
-            day=Date(1985, 5, 27),
+            day=date(1985, 5, 27),
             day_type=DayType.WORK,
             work_time=timeturner.Duration(hours=11),
             break_time=timeturner.Duration(hours=8),
@@ -383,7 +384,7 @@ GET_SUMMARY_TEST_CASES = [
 
 @pytest.mark.parametrize("segments, expected_summary", GET_SUMMARY_TEST_CASES)
 def test_get_summary(segments, expected_summary):
-    day = Date(1985, 5, 25)
+    day = date(1985, 5, 25)
     if segments:
         day = segments[0].start.date()
     assert (
@@ -415,7 +416,7 @@ ILLEGAL_SEGMENTS = [
 def test_get_summary_with_illegal_segments(segments, expected_error):
     with pytest.raises(expected_error):
         timeturner.get_daily_summary(
-            Date(1985, 5, 25), segments, report_settings=ReportSettings()
+            date(1985, 5, 25), segments, report_settings=ReportSettings()
         )
 
 
@@ -433,7 +434,7 @@ GROUP_BY_DAY_TEST_CASES = [
             ),
         ],
         {
-            Date(1985, 5, 25): [
+            date(1985, 5, 25): [
                 PensiveRow(
                     pk=1,
                     start=parse("1985-05-25 00:00:00"),
@@ -454,13 +455,13 @@ GROUP_BY_DAY_TEST_CASES = [
             ),
         ],
         {
-            Date(1985, 5, 25): [
+            date(1985, 5, 25): [
                 PensiveRow(
                     pk=1,
                     start=parse("1985-05-25 00:00:00"),
                 ),
             ],
-            Date(1985, 5, 26): [
+            date(1985, 5, 26): [
                 PensiveRow(
                     pk=1,
                     start=parse("1985-05-26 00:00:00"),
@@ -485,7 +486,7 @@ GROUP_BY_DAY_TEST_CASES = [
             ),
         ],
         {
-            Date(1985, 5, 25): [
+            date(1985, 5, 25): [
                 PensiveRow(
                     pk=1,
                     start=parse("1985-05-25 00:00:00"),
@@ -495,7 +496,7 @@ GROUP_BY_DAY_TEST_CASES = [
                     start=parse("1985-05-25 01:00:00"),
                 ),
             ],
-            Date(1985, 5, 26): [
+            date(1985, 5, 26): [
                 PensiveRow(
                     pk=1,
                     start=parse("1985-05-26 00:00:00"),

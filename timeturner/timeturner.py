@@ -1,14 +1,13 @@
+from datetime import date, datetime
 from itertools import groupby
 from pathlib import Path
 from typing import Iterator, cast
 
-from pendulum.date import Date
-from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.helper import end_of_day, iter_over_days
+from timeturner.helper import end_of_day, iter_over_days, now_with_tz
 from timeturner.models import (
     DailySummary,
     DayType,
@@ -22,7 +21,7 @@ from timeturner.tools.boltons_iterutils import pairwise_iter
 
 
 def get_daily_summary(
-    day: Date,
+    day: date,
     segments: list[PensiveRow],
     *,
     report_settings: ReportSettings,
@@ -157,7 +156,7 @@ def get_daily_summary(
     )
 
 
-def group_by_day(rows: list[PensiveRow]) -> dict[Date, list[PensiveRow]]:
+def group_by_day(rows: list[PensiveRow]) -> dict[date, list[PensiveRow]]:
     return {k: list(v) for k, v in groupby(rows, lambda r: r.start.date())}
 
 
@@ -180,11 +179,15 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 if day == row.end.date():
                     end = row.end
                 else:
-                    _end = day.add(days=1)
-                    end = DateTime(_end.year, _end.month, _end.day, tzinfo=row.start.tz)
+                    _end = add(day, days=1)
+                    end = datetime(
+                        _end.year, _end.month, _end.day, tzinfo=row.start.tzinfo
+                    )
                 yield PensiveRow(
                     pk=row.pk,
-                    start=DateTime(day.year, day.month, day.day, tzinfo=row.start.tz),
+                    start=datetime(
+                        day.year, day.month, day.day, tzinfo=row.start.tzinfo
+                    ),
                     end=end,
                     tags=row.tags,
                     description=row.description,
@@ -211,7 +214,7 @@ def list_(
     daily_segments = []
     for day in iter_over_days(start, end):
         # request_period.range("days"):
-        day = cast(DateTime, day)
+        day = cast(datetime, day)
         segments = segments_per_day[str(day)]
         daily_segments.append(
             SegmentsByDay(
@@ -243,7 +246,7 @@ def add(
     report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> list[PensiveRow]:
-    now = DateTime.now()
+    now = now_with_tz()
 
     if time is None:
         time = []
@@ -326,7 +329,7 @@ def split_segment_params_per_weekday(
                 ret.append(
                     NewSegmentParams(
                         start=start,
-                        end=DateTime(day.year, day.month, day.day, tzinfo=start.tz),
+                        end=datetime(day.year, day.month, day.day, tzinfo=start.tzinfo),
                         tags=new_segment_params.tags,
                         description=new_segment_params.description,
                         passive=new_segment_params.passive,
@@ -335,7 +338,7 @@ def split_segment_params_per_weekday(
 
         else:
             if report_settings.is_work_day(day):
-                start = DateTime(day.year, day.month, day.day, tzinfo=start.tz)
+                start = datetime(day.year, day.month, day.day, tzinfo=start.tzinfo)
                 condition = "work"
     if condition == "work":
         ret.append(
@@ -353,7 +356,7 @@ def split_segment_params_per_weekday(
 
 def _add(
     new_segment_params: NewSegmentParams,
-    now: DateTime,
+    now: datetime,
     *,
     report_settings: ReportSettings,
     db: DatabaseConnection,
@@ -393,6 +396,8 @@ def _add(
 
     conflicting_segments = db.get_segments_between(start, end)
     for conflicting_segment in conflicting_segments:
+        print(conflicting_segment.start)
+        print(now)
         conflicting_tag_prio = get_tag_prio(
             conflicting_segment.tags, report_settings.tag_settings
         )

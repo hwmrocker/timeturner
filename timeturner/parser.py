@@ -1,12 +1,9 @@
 import re
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, TypedDict
 
-import pendulum
-from pendulum.datetime import DateTime
-from pendulum.duration import Duration
-
-from timeturner.helper import end_of, end_of_day
+from timeturner.helper import add, end_of, end_of_day, now_with_tz, start_of, subtract
 from timeturner.models import NewSegmentParams
 from timeturner.settings import ReportSettings
 
@@ -94,7 +91,7 @@ def get_component_type(component: str, *, include_list_args) -> ComponentType:
     return ComponentType.UNKNOWN
 
 
-def parse_time(time: str, now: DateTime) -> DateTime:
+def parse_time(time: str, now: datetime) -> datetime:
     ret = TimeDict()
     match time.split(":"):
         case [hour, minute]:
@@ -106,10 +103,10 @@ def parse_time(time: str, now: DateTime) -> DateTime:
             ret["second"] = int(second)
         case _:
             raise ValueError(f"Invalid time: {time}")
-    return now.set(**ret)
+    return now.replace(**ret)
 
 
-def parse_date(date: str, now: DateTime) -> DateTime:
+def parse_date(date: str, now: datetime) -> datetime:
     ret = DateDict()
     match date.split("-"):
         case [year, month, day]:
@@ -123,10 +120,10 @@ def parse_date(date: str, now: DateTime) -> DateTime:
             ret["day"] = int(day)
         case _:
             raise ValueError(f"Invalid date: {date}")
-    return now.set(**ret)
+    return now.replace(**ret)
 
 
-def parse_delta(delta: str, now: DateTime) -> DateTime:
+def parse_delta(delta: str, now: datetime) -> datetime:
     ret = dict()
     matches = list(delta_components.finditer(delta))
     if not matches:
@@ -144,10 +141,10 @@ def parse_delta(delta: str, now: DateTime) -> DateTime:
         elif unit == "m":  # pragma: no branch
             ret["minutes"] = value
 
-    return now + Duration(**ret)
+    return now + timedelta(**ret)
 
 
-def parse_delta_with_time(delta_with_time: str, now: DateTime) -> DateTime:
+def parse_delta_with_time(delta_with_time: str, now: datetime) -> datetime:
     DateTimeDict()
     delta, time = delta_with_time.split("@")
     now = parse_delta(delta, now)
@@ -157,11 +154,11 @@ def parse_delta_with_time(delta_with_time: str, now: DateTime) -> DateTime:
 def single_time_parse(
     components: list[str],
     *,
-    now: DateTime | None = None,
+    now: datetime | None = None,
     include_list_args: bool = False,
-) -> DateTime:
+) -> datetime:
     if now is None:
-        now = pendulum.now()
+        now = now_with_tz()
 
     components_with_types = [
         (component, get_component_type(component, include_list_args=include_list_args))
@@ -190,7 +187,7 @@ def single_time_parse(
             pass
         case _:
             raise ValueError(f"Invalid components: {components}")
-    return now.set(second=0, microsecond=0)
+    return now.replace(second=0, microsecond=0)
 
 
 def parse_add_args(
@@ -217,7 +214,7 @@ def parse_add_args(
     else:
         end = None
     if prefer_full_days:
-        start = start.start_of("day")
+        start = start_of(start, "day")
         if not end:
             end = end_of_day(start)
         else:
@@ -232,12 +229,12 @@ def parse_add_args(
 def parse_list_args(
     args: list[str],
     *,
-    now: DateTime | None = None,
-) -> tuple[DateTime, DateTime]:
+    now: datetime | None = None,
+) -> tuple[datetime, datetime]:
     if now is None:
-        now = pendulum.now()
-    now = now.set(second=0, microsecond=0)
-    start = now.start_of("day")
+        now = now_with_tz()
+    now = now.replace(second=0, microsecond=0)
+    start = start_of(now, "day")
     end = end_of_day(now)
     if "-" in args:
         start, end = split_array(args, "-")
@@ -245,7 +242,7 @@ def parse_list_args(
         end = single_time_parse(end, now=start)
 
         if start.time() == now.time():
-            start = start.start_of("day")
+            start = start_of(start, "day")
         if end.time() == now.time():
             end = end_of_day(end)
 
@@ -254,32 +251,32 @@ def parse_list_args(
     elif len(args) == 1:
         arg = args[0]
         if arg in ["week", "month", "year"]:
-            start = now.start_of(arg)
+            start = start_of(now, arg)
             end = end_of(now, arg)
         elif arg == "today":
             pass
         elif arg == "yesterday":
-            start = start.subtract(days=1)
-            end = end.subtract(days=1)
+            start = subtract(start, days=1)
+            end = subtract(end, days=1)
         elif _match := range_components.match(arg):
             match _match.groupdict():
                 case {"value": value, "unit": "d" | "day" | "days"}:
-                    start = start.subtract(days=int(value) - 1)
+                    start = subtract(start, days=int(value) - 1)
                 case {"value": value, "unit": "w" | "week" | "weeks"}:
-                    start = start.start_of("week").subtract(weeks=int(value) - 1)
+                    start = subtract(start_of(start, "week"), weeks=int(value) - 1)
                     end = end_of(now, "week")
                 case {"value": value, "unit": "M" | "month" | "months"}:
-                    start = start.start_of("month").subtract(months=int(value) - 1)
+                    start = subtract(start_of(start, "month"), months=int(value) - 1)
                     end = end_of(now, "month")
                 case {  # pragma: no branch
                     "value": value,
                     "unit": "y" | "year" | "years",
                 }:
-                    start = start.start_of("year").subtract(years=int(value) - 1)
+                    start = subtract(start_of(start, "year"), years=int(value) - 1)
                     end = end_of(now, "year")
 
         else:
-            start = single_time_parse(args, now=now).start_of("day")
+            start = start_of(single_time_parse(args, now=now), "day")
     else:
         # we have 2 arguments, but no dash
         # we definitely define a specific time, so we don't change to

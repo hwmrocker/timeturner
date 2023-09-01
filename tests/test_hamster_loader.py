@@ -7,12 +7,11 @@ from pendulum.parser import parse as _parse
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.helper import DateTime
 from timeturner.models import TimeSegment
 
 
-def parse(s: str) -> DateTime:
-    return cast(DateTime, _parse(s))
+def parse(s: str) -> datetime:
+    return cast(datetime, _parse(s))
 
 
 SINGLE_TIME_SEGMENT_DATA = [

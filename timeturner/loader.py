@@ -1,11 +1,11 @@
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator, cast
 
 from pendulum.parser import parse
 
 from timeturner.db import DatabaseConnection
-from timeturner.helper import DateTime
 from timeturner.models import PensiveRow, TimeSegment
 
 re_date = re.compile(r"^\d{4}-\d{2}-\d{2}")
@@ -43,8 +43,8 @@ def extract_segments(lines: list[str]) -> Iterator[TimeSegment]:
         columns = [c.strip() for c in columns]
 
         # parse the start and end date
-        start = cast(DateTime, parse(columns[0]))
-        end = cast(DateTime, parse(columns[1])) if columns[1] else None
+        start = cast(datetime, parse(columns[0]))
+        end = cast(datetime, parse(columns[1])) if columns[1] else None
 
         # duration is not used
         # columns[2]

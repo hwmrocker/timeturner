@@ -1,15 +1,13 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum, auto
 from typing import Optional, cast
 
 import pendulum
-from pendulum.date import Date
 from pendulum.duration import Duration
-from pendulum.parser import parse
 from pendulum.time import Time
 from pydantic import BaseModel, validator
 
-from timeturner.helper import DateTime
+from timeturner.helper import now_with_tz
 
 
 class DayType(Enum):
@@ -20,7 +18,7 @@ class DayType(Enum):
 
 
 class DailySummary(BaseModel):
-    day: Date
+    day: date
     day_type: DayType = DayType.WORK
     work_time: Duration = Duration()
     break_time: Duration = Duration()
@@ -32,25 +30,23 @@ class DailySummary(BaseModel):
 
 
 class TimeSegment(BaseModel):
-    start: DateTime
-    end: DateTime | None = None
+    start: datetime
+    end: datetime | None = None
     passive: bool = False
     tags: list[str] = []
     description: str | None = None
 
     @validator("start")
-    def parse_start(cls, value: str | datetime | DateTime) -> DateTime:
-        if isinstance(value, DateTime):
-            return value
+    def parse_start(cls, value: str | datetime) -> datetime:
         if isinstance(value, datetime):
-            value = str(value)
-        new_value = parse(value)
-        if isinstance(new_value, DateTime):
+            return value
+        new_value = datetime.fromisoformat(value)
+        if isinstance(new_value, datetime):
             return new_value
         raise ValueError(f"Could not parse {value} as a datetime")
 
     @validator("end")
-    def parse_end(cls, value: str | datetime | DateTime | None) -> DateTime | None:
+    def parse_end(cls, value: str | datetime | None) -> datetime | None:
         if value is None:
             return None
         return cls.parse_start(value)
@@ -69,7 +65,7 @@ class TimeSegment(BaseModel):
     @property
     def duration(self) -> Duration:
         if self.end is None:
-            duration = cast(Duration, pendulum.now() - self.start)
+            duration = cast(Duration, now_with_tz() - self.start)
         else:
             duration = cast(Duration, self.end - self.start)
 
@@ -81,7 +77,7 @@ class PensiveRow(TimeSegment):
 
 
 class SegmentsByDay(BaseModel):
-    day: Date
+    day: date
     weekday: int
     segments: list[PensiveRow]
     summary: DailySummary
@@ -89,8 +85,8 @@ class SegmentsByDay(BaseModel):
 
 
 class NewSegmentParams(BaseModel):
-    start: DateTime
-    end: Optional[DateTime]
+    start: datetime
+    end: Optional[datetime]
     tags: list[str]
     description: str = ""
     passive: bool = False
