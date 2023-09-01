@@ -1,18 +1,21 @@
+from datetime import datetime
 from itertools import combinations
 
 import pytest
-from pendulum import datetime
 from pendulum.parser import parse
 
+from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner.db import DatabaseConnection
 from timeturner.models import PensiveRow
 
 pytestmark = pytest.mark.dependency(name="db_tests")
 
+dt_850525 = test_now.replace(hour=0, minute=0, second=0, microsecond=0)
+
 
 @pytest.mark.dependency(name="add_segment")
 def test_add_segment(db: DatabaseConnection):
-    start_date = datetime(1985, 5, 25, 0, 0, 0, tz="local")
+    start_date = dt_850525
     assert db.add_segment(start_date).pk == 1
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
@@ -21,8 +24,8 @@ def test_add_segment(db: DatabaseConnection):
 
 def test_add_segment_with_end(db: DatabaseConnection):
     db.add_segment(
-        datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 25, 1, 0, 0, tz="local"),
+        dt_850525,
+        dt_850525.replace(hour=1),
     )
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
@@ -37,8 +40,8 @@ def test_add_segment_with_end(db: DatabaseConnection):
     )
     expected = (
         1,
-        datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 25, 1, 0, 0, tz="local"),
+        dt_850525,
+        dt_850525.replace(hour=1),
         0,
         None,
     )
@@ -49,25 +52,25 @@ def test_add_segment_with_end(db: DatabaseConnection):
 GET_LATEST_TEST_CASES = [
     pytest.param(
         [
-            datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-            datetime(1985, 5, 25, 1, 0, 0, tz="local"),
+            dt_850525,
+            dt_850525.replace(hour=1),
         ],
         2,
         id="two segments in order",
     ),
     pytest.param(
         [
-            datetime(1985, 5, 25, 1, 0, 0, tz="local"),
-            datetime(1985, 5, 25, 0, 0, 0, tz="local"),
+            dt_850525.replace(hour=1),
+            dt_850525,
         ],
         1,
         id="two segments in reverse order",
     ),
     pytest.param(
         [
-            datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-            datetime(1985, 5, 25, 2, 0, 0, tz="local"),
-            datetime(1985, 5, 25, 1, 0, 0, tz="local"),
+            dt_850525,
+            dt_850525.replace(hour=2),
+            dt_850525.replace(hour=1),
         ],
         2,
         id="two segments in mixed order",
@@ -97,7 +100,7 @@ def test_get_latest_segment(db: DatabaseConnection, db_entries, latest_pk):
 
 def _get_all_combinations_of_segments():
     possible_elements = [
-        ("end", datetime(1985, 5, 25, 1, 0, 0, tz="local")),
+        ("end", dt_850525.replace(hour=1)),
         ("passive", True),
         ("tags", ["tag1"]),
         ("description", "description1"),
@@ -119,12 +122,12 @@ GET_LATEST_TEST_CASES = [
 @pytest.mark.parametrize("elements, expected_row", GET_LATEST_TEST_CASES)
 def test_add_segment_and_get_latest(db: DatabaseConnection, elements, expected_row):
     db.add_segment(
-        datetime(1985, 5, 25, 0, 0, 0, tz="local"),
+        dt_850525,
         **elements,
     )
     expected = PensiveRow(
         pk=1,
-        start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
+        start=dt_850525,
         end=expected_row.get("end"),
         passive=expected_row.get("passive", False),
         tags=expected_row.get("tags", []),
@@ -136,18 +139,18 @@ def test_add_segment_and_get_latest(db: DatabaseConnection, elements, expected_r
 
 UPDATE_SEGMENTS_TEST_CASES = [
     pytest.param(
-        dict(start=datetime(1985, 5, 25, 0, 0, 0, tz="local")),
+        dict(start=dt_850525),
         dict(
-            start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
-            end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
+            start=dt_850525.replace(hour=1),
+            end=dt_850525.replace(hour=2),
             passive=True,
             tags=["tag1"],
             description="description1",
         ),
         PensiveRow(
             pk=1,
-            start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
-            end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
+            start=dt_850525.replace(hour=1),
+            end=dt_850525.replace(hour=2),
             passive=True,
             tags=["tag1"],
             description="description1",
@@ -156,17 +159,17 @@ UPDATE_SEGMENTS_TEST_CASES = [
     ),
     pytest.param(
         dict(
-            start=datetime(1985, 5, 25, 1, 0, 0, tz="local"),
-            end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
+            start=dt_850525.replace(hour=1),
+            end=dt_850525.replace(hour=2),
             passive=True,
             tags=["tag1"],
             description="description1",
         ),
-        dict(start=datetime(1985, 5, 25, 0, 0, 0, tz="local")),
+        dict(start=dt_850525),
         PensiveRow(
             pk=1,
-            start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-            end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
+            start=dt_850525,
+            end=dt_850525.replace(hour=2),
             passive=True,
             tags=["tag1"],
             description="description1",
@@ -175,8 +178,8 @@ UPDATE_SEGMENTS_TEST_CASES = [
     ),
     pytest.param(
         dict(
-            start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-            end=datetime(1985, 5, 25, 2, 0, 0, tz="local"),
+            start=dt_850525,
+            end=dt_850525.replace(hour=2),
             passive=True,
             tags=["tag1"],
             description="description1",
@@ -189,7 +192,7 @@ UPDATE_SEGMENTS_TEST_CASES = [
         ),
         PensiveRow(
             pk=1,
-            start=datetime(1985, 5, 25, 0, 0, 0, tz="local"),
+            start=dt_850525,
             end=None,
             passive=False,
             tags=[],
@@ -217,7 +220,7 @@ def test_update_segment(
 
 
 def test_delete_segment(db: DatabaseConnection):
-    pk = db.add_segment(datetime(1985, 5, 25, 0, 0, 0, tz="local")).pk
+    pk = db.add_segment(dt_850525).pk
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
     db.delete_segment(pk)
@@ -227,26 +230,26 @@ def test_delete_segment(db: DatabaseConnection):
 
 GET_SEGMENTS_BETWEEN_TEST_CASES = [
     pytest.param(
-        datetime(1985, 5, 24, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 24, 23, 59, 59, tz="local"),
+        dt_850525.replace(day=24),
+        dt_850525.replace(day=24, hour=23, minute=59, second=59),
         [1, 2],
         id="2 on the same day",
     ),
     pytest.param(
-        datetime(1985, 5, 25, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 25, 23, 59, 59, tz="local"),
+        dt_850525,
+        dt_850525.replace(hour=23, minute=59, second=59),
         [3, 4],
         id="one event ends the next day",
     ),
     pytest.param(
-        datetime(1985, 5, 26, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 26, 23, 59, 59, tz="local"),
+        dt_850525.replace(day=26),
+        dt_850525.replace(day=26, hour=23, minute=59, second=59),
         [4, 5],
         id="one event starts the previous day, the other has no end",
     ),
     pytest.param(
-        datetime(1985, 5, 27, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 27, 23, 59, 59, tz="local"),
+        dt_850525.replace(day=27),
+        dt_850525.replace(day=27, hour=23, minute=59, second=59),
         [5],
         id="one event starts the previous day, the other has no end",
     ),
@@ -258,26 +261,26 @@ GET_SEGMENTS_BETWEEN_TEST_CASES = [
 def test_get_segments_between(db: DatabaseConnection, start, end, expected):
     # 2 segments on the same day
     db.add_segment(
-        start=datetime(1985, 5, 24, 7, 0, 0, tz="local"),
-        end=datetime(1985, 5, 24, 12, 0, 0, tz="local"),
+        start=dt_850525.replace(day=24, hour=7),
+        end=dt_850525.replace(day=24, hour=12),
     )
     db.add_segment(
-        start=datetime(1985, 5, 24, 13, 0, 0, tz="local"),
-        end=datetime(1985, 5, 24, 17, 0, 0, tz="local"),
+        start=dt_850525.replace(day=24, hour=13),
+        end=dt_850525.replace(day=24, hour=17),
     )
     # 1 segment on the next day
     db.add_segment(
-        start=datetime(1985, 5, 25, 9, 0, 0, tz="local"),
-        end=datetime(1985, 5, 25, 17, 0, 0, tz="local"),
+        start=dt_850525.replace(hour=9),
+        end=dt_850525.replace(hour=17),
     )
     # 1 passive segment ending on the next day
     db.add_segment(
-        start=datetime(1985, 5, 25, 23, 0, 0, tz="local"),
-        end=datetime(1985, 5, 26, 4, 0, 0, tz="local"),
+        start=dt_850525.replace(hour=23),
+        end=dt_850525.replace(day=26, hour=4),
         passive=True,
     )
     db.add_segment(
-        start=datetime(1985, 5, 26, 9, 0, 0, tz="local"),
+        start=dt_850525.replace(day=26, hour=9),
     )
 
     rows = db.get_segments_between(start, end)
@@ -286,42 +289,42 @@ def test_get_segments_between(db: DatabaseConnection, start, end, expected):
 
 def test_get_segments_between_full_day_corner_case(db: DatabaseConnection):
     db.add_segment(
-        start=datetime(1985, 5, 1, 0, 0, 0, tz="local"),
-        end=datetime(1985, 5, 2, 0, 0, 0, tz="local"),
+        start=dt_850525.replace(day=1),
+        end=dt_850525.replace(day=2),
         tags=["holiday"],
     )
     db.add_segment(
-        start=datetime(1985, 5, 2, 0, 0, 0, tz="local"),
-        end=datetime(1985, 5, 3, 0, 0, 0, tz="local"),
+        start=dt_850525.replace(day=2),
+        end=dt_850525.replace(day=3),
         tags=["vacation"],
     )
     rows = db.get_segments_between(
-        datetime(1985, 5, 2, 0, 0, 0, tz="local"),
-        datetime(1985, 5, 4, 0, 0, 0, tz="local"),
+        dt_850525.replace(day=2),
+        dt_850525.replace(day=4),
     )
     assert [row.pk for row in rows] == [2]
 
 
 def test_get_all_segments(db: DatabaseConnection):
     db.add_segment(
-        start=datetime(1985, 5, 24, 7, 0, 0, tz="local"),
-        end=datetime(1985, 5, 24, 12, 0, 0, tz="local"),
+        start=dt_850525.replace(day=24, hour=7),
+        end=dt_850525.replace(day=24, hour=12),
     )
     db.add_segment(
-        start=datetime(1985, 5, 24, 13, 0, 0, tz="local"),
-        end=datetime(1985, 5, 24, 17, 0, 0, tz="local"),
+        start=dt_850525.replace(day=24, hour=13),
+        end=dt_850525.replace(day=24, hour=17),
     )
     db.add_segment(
-        start=datetime(1985, 5, 25, 9, 0, 0, tz="local"),
-        end=datetime(1985, 5, 25, 17, 0, 0, tz="local"),
+        start=dt_850525.replace(hour=9),
+        end=dt_850525.replace(hour=17),
     )
     db.add_segment(
-        start=datetime(1985, 5, 25, 23, 0, 0, tz="local"),
-        end=datetime(1985, 5, 26, 4, 0, 0, tz="local"),
+        start=dt_850525.replace(hour=23),
+        end=dt_850525.replace(day=26, hour=4),
         passive=True,
     )
     db.add_segment(
-        start=datetime(1985, 5, 26, 9, 0, 0, tz="local"),
+        start=dt_850525.replace(day=26, hour=9),
     )
 
     rows = db.get_all_segments()
