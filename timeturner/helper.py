@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import date, datetime, timedelta, timezone
-from typing import Iterator, cast
+from typing import Iterator
 
 
 def start_of(dt: datetime, unit: str) -> datetime:
@@ -31,14 +31,14 @@ def start_of(dt: datetime, unit: str) -> datetime:
     return new_value + additional_delta
 
 
-def add(dt: datetime, weeks=0, **kwargs) -> datetime:
+def dt_add(dt: datetime, weeks=0, **kwargs) -> datetime:
     if weeks:
         kwargs["days"] = kwargs.get("days", 0) + weeks * 7
     print(f"dt: {dt!r}, kwargs: {kwargs!r}")
     return dt + timedelta(**{k: v for k, v in kwargs.items()})
 
 
-def subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
+def dt_subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
     ret = dt - timedelta(**{k: v for k, v in kwargs.items()})
     new_month = ret.month
     new_year = ret.year
@@ -65,7 +65,7 @@ def subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
 
 def iter_over_days(start: datetime, end: datetime) -> Iterator[date]:
     print(f"start: {start!r}, end: {end!r}")
-    end = subtract(end, microseconds=1)
+    end = dt_subtract(end, microseconds=1)
     if end < start:
         return
     print(f"start: {start!r}, end: {end!r}")
@@ -89,13 +89,13 @@ def end_of(dt: datetime, unit: str) -> datetime:
     if unit == "month":
         new_dt = start_of(dt, "month")
         _, days_of_month = calendar.monthrange(new_dt.year, new_dt.month)
-        return add(new_dt, days=days_of_month)
-    return add(start_of(dt, unit), **{f"{unit}s": 1})
+        return dt_add(new_dt, days=days_of_month)
+    return dt_add(start_of(dt, unit), **{f"{unit}s": 1})
 
 
 def end_of_day(dt: datetime) -> datetime:
     """Return the first possible moment of the next day."""
-    return add(start_of(dt, "day"), days=1)
+    return dt_add(start_of(dt, "day"), days=1)
 
 
 local_tz = datetime.now(timezone.utc).astimezone().tzinfo

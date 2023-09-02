@@ -14,12 +14,12 @@ def _pretty_duration(duration: timedelta) -> str:
     if duration.seconds < 0:
         # return "NEGATIVE TIME"
         a = "-"
-
+    total_seconds = abs(duration.total_seconds())
     periods = [
         # ("w", duration.weeks),
         # ("d", duration.remaining_days),
-        ("h", int(duration.total_hours())),
-        ("m", duration.minutes),
+        ("h", int(total_seconds / 60 / 60)),
+        ("m", total_seconds / 60 % 60),
     ]
 
     parts = []
@@ -68,13 +68,13 @@ def segments_by_day(
         if segment.summary.start:
             start_str = (
                 f"[bold]{w[segment.day.weekday()]}[/] {segment.day} "
-                f"{segment.summary.start.format('HH:mm')}"
+                f"{segment.summary.start.strftime('%H:%M')}"
             )
         else:
             start_str = f"[bold]{w[segment.day.weekday()]}[/] {segment.day}"
         table.add_row(
             start_str,
-            segment.summary.end.format("HH:mm") if segment.summary.end else "",
+            segment.summary.end.strftime("%H:%M") if segment.summary.end else "",
             str(segment.summary.day_type.value),
             pretty_duration(segment.summary.work_time),
             pretty_duration(segment.summary.break_time),
@@ -84,13 +84,13 @@ def segments_by_day(
         if show_all:
             for sub_segment in segment.segments:
                 start_str: str = (
-                    (" " * 15 + f"[white]{sub_segment.start.format('HH:mm')}[/]")
+                    (" " * 15 + f"[white]{sub_segment.start.strftime('%H:%M')}[/]")
                     if sub_segment.start
                     else ""
                 )
                 table.add_row(
                     start_str,
-                    sub_segment.end.format("HH:mm") if sub_segment.end else "",
+                    sub_segment.end.strftime("%H:%M") if sub_segment.end else "",
                     "work" if not sub_segment.passive else "break",
                     pretty_duration(sub_segment.duration),
                     "",
@@ -117,4 +117,4 @@ def print_pretty_record(segment: PensiveRow | None) -> None:
         console.print("No segment found.")
         return
 
-    print(f"Added record with start: {segment.start.format('YYYY-MM-DD HH:mm')}")
+    print(f"Added record with start: {segment.start.strftime('%Y-%m-%d %H:%M')}")

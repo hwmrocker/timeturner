@@ -2,7 +2,7 @@ import pytest
 
 from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
 from timeturner import models, parser
-from timeturner.helper import add, end_of, end_of_day, start_of, subtract
+from timeturner.helper import dt_add, dt_subtract, end_of, end_of_day, start_of
 from timeturner.settings import ReportSettings
 
 default_report_settings = ReportSettings()
@@ -247,21 +247,24 @@ PARSE_LIST_ARGS_EXAMPLES = [
     pytest.param(
         [],
         dict(
-            now=add(test_now, days=1),
+            now=dt_add(test_now, days=1),
         ),
-        (add(start_of(test_now, "day"), days=1), end_of_day(add(test_now, days=1))),
+        (
+            dt_add(start_of(test_now, "day"), days=1),
+            end_of_day(dt_add(test_now, days=1)),
+        ),
         id="no args, passing now",
     ),
     pytest.param(
         ["2d"],  # checking yesterday and today
         dict(),
-        (subtract(start_of(test_now, "day"), days=1), end_of_day(test_now)),
+        (dt_subtract(start_of(test_now, "day"), days=1), end_of_day(test_now)),
         id="2d",
     ),
     pytest.param(
         ["2days"],  # checking yesterday and today
         dict(),
-        (subtract(start_of(test_now, "day"), days=1), end_of_day(test_now)),
+        (dt_subtract(start_of(test_now, "day"), days=1), end_of_day(test_now)),
         id="2days",
     ),
     pytest.param(
@@ -292,27 +295,27 @@ PARSE_LIST_ARGS_EXAMPLES = [
         ["yesterday"],  # checking yesterday
         dict(),
         (
-            subtract(start_of(test_now, "day"), days=1),
-            end_of_day(subtract(test_now, days=1)),
+            dt_subtract(start_of(test_now, "day"), days=1),
+            end_of_day(dt_subtract(test_now, days=1)),
         ),
         id="yesterday",
     ),
     pytest.param(
         ["4w"],  # checking last 4 weeks
         dict(),
-        (subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
+        (dt_subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
         id="4w",
     ),
     pytest.param(
         ["4week"],  # checking last 4 weeks
         dict(),
-        (subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
+        (dt_subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
         id="4week",
     ),
     pytest.param(
         ["4weeks"],  # checking last 4 weeks
         dict(),
-        (subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
+        (dt_subtract(start_of(test_now, "week"), weeks=3), end_of(test_now, "week")),
         id="4weeks",
     ),
     pytest.param(

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import cast
 
 from freezegun import freeze_time
 
@@ -11,3 +10,5 @@ freeze_time_at_1985_25_05__15_34_12 = freeze_time(
     test_now.strftime("%Y-%m-%d %H:%M:%S"),
     tz_offset=-int(test_now.utcoffset().total_seconds() // (60 * 60)),
 )
+
+parse = parse

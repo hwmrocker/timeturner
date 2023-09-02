@@ -5,7 +5,7 @@ from typing import Iterator, cast
 
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.helper import end_of_day, iter_over_days, now_with_tz
+from timeturner.helper import dt_add, end_of_day, iter_over_days, now_with_tz
 from timeturner.models import (
     DailySummary,
     DayType,
@@ -177,7 +177,7 @@ def split_segments_at_midnight(rows: list[PensiveRow]) -> Iterator[PensiveRow]:
                 if day == row.end.date():
                     end = row.end
                 else:
-                    _end = add(day, days=1)
+                    _end = dt_add(day, days=1)
                     end = datetime(
                         _end.year, _end.month, _end.day, tzinfo=row.start.tzinfo
                     )

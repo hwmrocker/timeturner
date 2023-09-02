@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, TypedDict
 
-from timeturner.helper import add, end_of, end_of_day, now_with_tz, start_of, subtract
+from timeturner.helper import dt_subtract, end_of, end_of_day, now_with_tz, start_of
 from timeturner.models import NewSegmentParams
 from timeturner.settings import ReportSettings
 
@@ -256,23 +256,23 @@ def parse_list_args(
         elif arg == "today":
             pass
         elif arg == "yesterday":
-            start = subtract(start, days=1)
-            end = subtract(end, days=1)
+            start = dt_subtract(start, days=1)
+            end = dt_subtract(end, days=1)
         elif _match := range_components.match(arg):
             match _match.groupdict():
                 case {"value": value, "unit": "d" | "day" | "days"}:
-                    start = subtract(start, days=int(value) - 1)
+                    start = dt_subtract(start, days=int(value) - 1)
                 case {"value": value, "unit": "w" | "week" | "weeks"}:
-                    start = subtract(start_of(start, "week"), weeks=int(value) - 1)
+                    start = dt_subtract(start_of(start, "week"), weeks=int(value) - 1)
                     end = end_of(now, "week")
                 case {"value": value, "unit": "M" | "month" | "months"}:
-                    start = subtract(start_of(start, "month"), months=int(value) - 1)
+                    start = dt_subtract(start_of(start, "month"), months=int(value) - 1)
                     end = end_of(now, "month")
                 case {  # pragma: no branch
                     "value": value,
                     "unit": "y" | "year" | "years",
                 }:
-                    start = subtract(start_of(start, "year"), years=int(value) - 1)
+                    start = dt_subtract(start_of(start, "year"), years=int(value) - 1)
                     end = end_of(now, "year")
 
         else:
