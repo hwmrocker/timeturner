@@ -11,7 +11,7 @@ console = Console()
 
 def _pretty_duration(duration: timedelta) -> str:
     a = ""
-    if duration.seconds < 0:
+    if duration.total_seconds() < 0:
         # return "NEGATIVE TIME"
         a = "-"
     total_seconds = abs(duration.total_seconds())
@@ -25,8 +25,8 @@ def _pretty_duration(duration: timedelta) -> str:
     parts = []
     for period in periods:
         unit, count = period
-        if abs(count) > 0:
-            parts.append(f"{abs(count)}{unit}")
+        if count > 0:
+            parts.append(f"{abs(int(count))}{unit}")
 
     return a + str(" ".join(parts))
 
