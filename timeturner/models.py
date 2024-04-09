@@ -30,6 +30,7 @@ class TimeSegment(BaseModel):
     start: datetime
     end: datetime | None = None
     passive: bool = False
+    full_days: bool = False
     tags: list[str] = []
     description: str | None = None
 

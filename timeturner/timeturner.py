@@ -46,8 +46,8 @@ def get_daily_summary(
     tags = set(tag for segment in segments for tag in segment.tags)
 
     has_full_day_tag = report_settings.has_full_day_tags(tags)
-    if has_full_day_tag:
-        assert len(segments) == 1
+    # if has_full_day_tag:
+    #     assert len(segments) == 1
 
     track_work_time = True
     track_break_time = False
@@ -392,7 +392,7 @@ def _add(
             # we have just one segment, so we can continue
             new_segment_params = new_segment_params_per_weekday[0]
 
-    conflicting_segments = db.get_segments_between(start, end)
+    conflicting_segments = db.get_segments_between(start, end, exclude_full_days=True)
     for conflicting_segment in conflicting_segments:
         print(conflicting_segment.start)
         print(now)

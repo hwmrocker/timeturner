@@ -122,6 +122,8 @@ TODOs:
 TODOS by command:
 
 - [x] add
+  - [ ] sick day / holiday can exist with other activities
+  - [ ] 2024-03-21 7:30 - 12:30 / @sick
 
 - [ ] end
   - [ ] add tests

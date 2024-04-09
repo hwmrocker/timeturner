@@ -362,7 +362,15 @@ ADD_TEST_CASES = [
         ],
         id="vacation in the future should not affect end function",
     ),
-    # test_case_builder(
+    tt_test_case(
+        [["9:00", "-", "+3h"], ["@sick"]],
+        [
+            (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
+            (parse("1985-05-25 12:00:00"), None, ["sick"]),
+        ],
+        id="full day tag can coexist with other segments",
+    ),
+    # tt_test_case(
     #     [["9:00", "-", "+3h", "@prio1"], ["11:00"]],
     #     [
     #         (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
@@ -389,8 +397,8 @@ def test_add_segment(
     for observed, expected in zip(
         sorted(start_and_end_times), sorted(expected_start_end_times)
     ):
-        print(observed)
-        print(expected)
+        print(f"{observed=}")
+        print(f"{expected=}")
         print()
     assert sorted(start_and_end_times) == sorted(expected_start_end_times)
 

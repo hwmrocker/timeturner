@@ -16,13 +16,15 @@ It has the following columns:
 
 import sqlite3
 from datetime import datetime
-from typing import Any, Optional, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from timeturner.models import PensiveRow
 
+if TYPE_CHECKING:
+    from timeturner.settings import ReportSettings
 
-class Sentinel:
-    ...
+
+class Sentinel: ...
 
 
 sentinel = Sentinel()
@@ -35,15 +37,82 @@ def str_if_not_none(value: Any) -> str | None:
 
 
 class DatabaseConnection:
+    DB_VERSION = 2
+
     def __init__(
         self,
         database_file: str = "timeturner.db",
         table_name: str = "pensieve",
+        *,
+        report_settings: "ReportSettings | None" = None,
     ):
         self.table_name = table_name
         self.database_file = database_file
         self.connection = sqlite3.connect(self.database_file)
+        self.report_settings = report_settings
         self.create_table()
+        # self.migrate(up_to_version=2)
+
+    def migrate(self, up_to_version: int, report_settings: "ReportSettings") -> None:
+        current_version = self.version()
+        if current_version == up_to_version:
+            return
+        if current_version > up_to_version:
+            raise ValueError(
+                f"Current database version is {current_version}, "
+                f"cannot migrate to version {up_to_version}"
+            )
+        for version in range(current_version + 1, up_to_version + 1):
+            getattr(self, f"_migrate_to_{version}")(report_settings)
+            cursor = self.connection.cursor()
+            cursor.execute(
+                """
+                INSERT INTO applied_migrations (version_number) VALUES (?)
+                """,
+                (str(version),),
+            )
+            self.connection.commit()
+
+    def _migrate_to_2(self, report_settings) -> None:
+        print(f"Migrating database to version 2 ...")
+        cursor = self.connection.cursor()
+        cursor.execute(
+            f"""
+            ALTER TABLE {self.table_name} RENAME TO old_{self.table_name}
+            """
+        )
+        cursor.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.table_name} (
+                pk INTEGER PRIMARY KEY AUTOINCREMENT,
+                start DATETIME,
+                end DATETIME,
+                passive BOOLEAN DEFAULT FALSE,
+                full_days BOOLEAN DEFAULT FALSE,
+                description TEXT
+            )
+            """
+        )
+        cursor.execute(
+            f"""
+            INSERT INTO {self.table_name} (start, end, passive, description)
+            SELECT start, end, passive, description FROM old_{self.table_name}
+            """
+        )
+        cursor.execute(
+            f"""
+            DROP TABLE old_{self.table_name}
+            """
+        )
+        for segment in self.get_all_segments():
+            print(f"Updating segment {segment.pk} {segment}", end=" ")
+            if report_settings.has_full_day_tags(segment.tags):
+                self.update_segment(segment.pk, full_days=True)
+                print("full_days=True")
+            print()
+
+        self.connection.commit()
+        print(f"Migration to version 2 complete")
 
     def create_table(self):
         cursor = self.connection.cursor()
@@ -54,6 +123,7 @@ class DatabaseConnection:
                 start DATETIME,
                 end DATETIME,
                 passive BOOLEAN DEFAULT FALSE,
+                full_days BOOLEAN DEFAULT FALSE,
                 description TEXT
             )
             """
@@ -76,29 +146,54 @@ class DatabaseConnection:
             )
             """
         )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS applied_migrations (
+                version_id INTEGER PRIMARY KEY,
+                version_number TEXT
+            )
+            """
+        )
+
         self.connection.commit()
+
+    def version(self):
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """
+            SELECT version_number FROM applied_migrations ORDER BY version_id DESC LIMIT 1
+            """
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return 1
+        return int(row[0])
 
     def add_segment(
         self,
         start: datetime,
         end: datetime | None = None,
         passive: bool | None = False,
+        full_days: bool | None = False,
         tags: list[str] | None = None,
         description: str | None = None,
     ) -> PensiveRow:
         # fix passive if it is None
         if passive is None:
             passive = False
+        if full_days is None:
+            full_days = False
         if tags is None:
             tags = []
         query = f"""
-            INSERT INTO {self.table_name} (start, end, passive, description)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO {self.table_name} (start, end, passive, full_day, description)
+            VALUES (?, ?, ?, ?, ?)
             """
         values = (
             str_if_not_none(start),
             str_if_not_none(end),
             passive,
+            full_days,
             description,
         )
         cursor = self.connection.cursor()
@@ -163,6 +258,7 @@ class DatabaseConnection:
         start: datetime | Sentinel = sentinel,
         end: datetime | None | Sentinel = sentinel,
         passive: bool | None | Sentinel = sentinel,
+        full_days: bool | None | Sentinel = sentinel,
         tags: list[str] | None | Sentinel = sentinel,
         description: str | None | Sentinel = sentinel,
     ) -> None:
@@ -179,6 +275,11 @@ class DatabaseConnection:
             if passive is None:
                 passive = False
             values_to_update.append(passive)
+        if full_days is not sentinel:
+            elements_to_update.append("full_days = ?")
+            if full_days is None:
+                full_days = False
+            values_to_update.append(full_days)
         if description is not sentinel:
             elements_to_update.append("description = ?")
             values_to_update.append(description)
@@ -256,7 +357,7 @@ class DatabaseConnection:
             where_clause = "WHERE end IS NULL"
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, description FROM {self.table_name}
+            SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
             {where_clause}
             ORDER BY start DESC LIMIT 1
             """
@@ -265,7 +366,7 @@ class DatabaseConnection:
         row = cursor.fetchone()
         if row is None:
             return None
-        pk, start, end, passive, description = row
+        pk, start, end, passive, full_days, description = row
         if passive is None:
             passive = False
         return PensiveRow(
@@ -273,6 +374,7 @@ class DatabaseConnection:
             start=start,
             end=end,
             passive=passive,
+            full_days=full_days,
             tags=self.get_tags_for_segment(pk),
             description=description,
         )
@@ -291,7 +393,7 @@ class DatabaseConnection:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, description FROM {self.table_name}
+            SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
             WHERE pk = ?
             """,
             (pk,),
@@ -300,14 +402,17 @@ class DatabaseConnection:
         row = cursor.fetchone()
         if row is None:
             return None
-        pk, start, end, passive, description = row
+        pk, start, end, passive, full_days, description = row
         if passive is None:
             passive = False
+        if full_days is None:
+            full_days = False
         return PensiveRow(
             pk=pk,
             start=start,
             end=end,
             passive=passive,
+            full_days=full_days,
             tags=self.get_tags_for_segment(pk),
             description=description,
         )
@@ -331,7 +436,7 @@ class DatabaseConnection:
             end = start
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, description FROM {self.table_name}
+            SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
             WHERE start <= ? AND (end > ? OR end IS NULL)
             ORDER BY start ASC
             """,
@@ -345,10 +450,11 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
+                full_days=full_days,
                 tags=self.get_tags_for_segment(pk),
                 description=description,
             )
-            for pk, start, end, passive, description in rows
+            for pk, start, end, passive, full_days, description in rows
         ]
 
         if end_is_none:
@@ -356,7 +462,7 @@ class DatabaseConnection:
             # after the given start time
             cursor.execute(
                 f"""
-                SELECT pk, start, end, passive, description FROM {self.table_name}
+                SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
                 WHERE start > ?
                 ORDER BY start ASC LIMIT 1
                 """,
@@ -364,13 +470,14 @@ class DatabaseConnection:
             )
             row = cursor.fetchone()
             if row is not None:
-                pk, start, end, passive, description = row
+                pk, start, end, passive, full_days, description = row
                 collected_rows.append(
                     PensiveRow(
                         pk=pk,
                         start=start,
                         end=end,
                         passive=passive,
+                        full_days=full_days,
                         tags=self.get_tags_for_segment(pk),
                         description=description,
                     )
@@ -382,7 +489,7 @@ class DatabaseConnection:
 
         cursor.execute(
             f"""
-            SELECT pk, start, end, passive, description FROM {self.table_name}
+            SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
             """
         )
 
@@ -393,8 +500,9 @@ class DatabaseConnection:
                 start=start,
                 end=end,
                 passive=passive,
+                full_days=full_days,
                 tags=self.get_tags_for_segment(pk),
                 description=description,
             )
-            for pk, start, end, passive, description in rows
+            for pk, start, end, passive, full_days, description in rows
         ]
