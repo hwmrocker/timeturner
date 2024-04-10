@@ -1,3 +1,4 @@
+import re
 from datetime import date, timedelta
 from os import environ
 from pathlib import Path
@@ -8,6 +9,9 @@ from pydantic import BaseModel, BaseSettings, root_validator
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
+
+valid_table_name = re.compile(r"^[a-z_]+$")
+
 
 DEFAULT_CONFIG_HOME = (
     Path.home() / environ.get("XDG_CONFIG_HOME", ".config") / "timeturner"
@@ -42,6 +46,15 @@ class DatabaseSettings(BaseModel):
     file: str = "timeturner.db"
     home: Path = config_settings.config_home
     table_name: str = "pensieve"
+
+    @root_validator
+    def validate_table_name(cls, values):
+        table_name = values.get("table_name")
+        if not valid_table_name.match(table_name):
+            raise ValueError(
+                "table_name must be in lowercase, only contain letters and underscores"
+            )
+        return values
 
     @property
     def database_path(self) -> Path:
