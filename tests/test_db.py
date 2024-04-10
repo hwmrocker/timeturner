@@ -17,7 +17,7 @@ def test_add_segment(db: DatabaseConnection):
     assert db.add_segment(start_date).pk == 1
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
-    assert rows[0] == (1, str(start_date), None, 0, None)
+    assert rows[0] == (1, str(start_date), None, 0, 0, None)
 
 
 def test_add_segment_with_end(db: DatabaseConnection):
@@ -27,19 +27,21 @@ def test_add_segment_with_end(db: DatabaseConnection):
     )
     rows = db.connection.execute("SELECT * FROM pensieve").fetchall()
     assert len(rows) == 1
-    pk, start, end, passive, description = rows[0]
+    pk, start, end, passive, full_days, description = rows[0]
 
     db_entry = (
         pk,
         parse(start),
         parse(end),
         passive,
+        full_days,
         description,
     )
     expected = (
         1,
         dt_850525,
         dt_850525.replace(hour=1),
+        0,
         0,
         None,
     )

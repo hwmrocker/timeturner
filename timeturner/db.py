@@ -186,7 +186,7 @@ class DatabaseConnection:
         if tags is None:
             tags = []
         query = f"""
-            INSERT INTO {self.table_name} (start, end, passive, full_day, description)
+            INSERT INTO {self.table_name} (start, end, passive, full_days, description)
             VALUES (?, ?, ?, ?, ?)
             """
         values = (
