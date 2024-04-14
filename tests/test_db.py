@@ -102,6 +102,7 @@ def _get_all_combinations_of_segments():
     possible_elements = [
         ("end", dt_850525.replace(hour=1)),
         ("passive", True),
+        ("full_days", True),
         ("tags", ["tag1"]),
         ("description", "description1"),
     ]
@@ -115,6 +116,9 @@ GET_LATEST_TEST_CASES = [
     pytest.param(dict(passive=True), dict(passive=True), id="passive True"),
     pytest.param(dict(passive=False), dict(passive=False), id="passive False"),
     pytest.param(dict(passive=None), dict(passive=False), id="passive None"),
+    pytest.param(dict(full_days=True), dict(full_days=True), id="full_days True"),
+    pytest.param(dict(full_days=False), dict(full_days=False), id="full_days False"),
+    pytest.param(dict(full_days=None), dict(full_days=False), id="full_days None"),
 ]
 
 
@@ -130,6 +134,7 @@ def test_add_segment_and_get_latest(db: DatabaseConnection, elements, expected_r
         start=dt_850525,
         end=expected_row.get("end"),
         passive=expected_row.get("passive", False),
+        full_days=expected_row.get("full_days", False),
         tags=expected_row.get("tags", []),
         description=expected_row.get("description"),
     )
@@ -287,6 +292,49 @@ def test_get_segments_between(db: DatabaseConnection, start, end, expected):
     assert [row.pk for row in rows] == expected
 
 
+def test_get_segments_between_exclude_full_days(db: DatabaseConnection):
+    db.add_segment(
+        start=dt_850525.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+        end=dt_850525.replace(day=2, hour=0, minute=0, second=0, microsecond=0),
+        full_days=True,
+        tags=["holiday"],
+    )
+    db.add_segment(
+        start=dt_850525.replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+        end=dt_850525.replace(day=2, hour=0, minute=0, second=0, microsecond=0),
+        full_days=False,
+        tags=["holiday"],
+    )
+    db.add_segment(
+        start=dt_850525.replace(day=2, hour=0, minute=0, second=0, microsecond=0),
+        end=dt_850525.replace(day=3, hour=0, minute=0, second=0, microsecond=0),
+        full_days=True,
+        tags=["vacation"],
+    )
+    db.add_segment(
+        start=dt_850525.replace(day=2, hour=0, minute=0, second=0, microsecond=0),
+        end=dt_850525.replace(day=3, hour=0, minute=0, second=0, microsecond=0),
+        full_days=False,
+        tags=["vacation"],
+    )
+    rows = db.get_segments_between(
+        dt_850525.replace(day=2),
+        dt_850525.replace(day=4),
+        exclude_full_days=False,
+    )
+
+    assert [row.pk for row in rows] == [3, 4]
+
+    rows_without_full_days = db.get_segments_between(
+        dt_850525.replace(day=2),
+        dt_850525.replace(day=4),
+        exclude_full_days=True,
+    )
+
+    # we expect that all rows where full_days is True are excluded
+    assert [row.pk for row in rows_without_full_days] == [4]
+
+
 def test_get_segments_between_full_day_corner_case(db: DatabaseConnection):
     db.add_segment(
         start=dt_850525.replace(day=1),
@@ -299,8 +347,8 @@ def test_get_segments_between_full_day_corner_case(db: DatabaseConnection):
         tags=["vacation"],
     )
     rows = db.get_segments_between(
-        dt_850525.replace(day=2),
-        dt_850525.replace(day=4),
+        dt_850525.replace(day=2, hour=0),
+        dt_850525.replace(day=4, hour=0),
     )
     assert [row.pk for row in rows] == [2]
 

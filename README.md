@@ -122,7 +122,7 @@ TODOs:
 TODOS by command:
 
 - [x] add
-  - [ ] sick day / holiday can exist with other activities
+  - [x] sick day / holiday can exist with other activities
   - [ ] 2024-03-21 7:30 - 12:30 / @sick
 
 - [ ] end
@@ -151,6 +151,8 @@ TODOS by command:
 
 - [ ] undo (revert the last change)
 - [ ] confirm changes that would modify other entries
+- [ ] decide if we should use full_day or full_days
+
 
 ### Design Goals
 

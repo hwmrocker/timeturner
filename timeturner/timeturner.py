@@ -240,7 +240,7 @@ def list_(
 def add(
     time: list[str] | None,
     *,
-    holiday: bool = False,
+    holiday: bool = False,  # is this still needed? TODO: check
     report_settings: ReportSettings,
     db: DatabaseConnection,
 ) -> list[PensiveRow]:
@@ -331,6 +331,7 @@ def split_segment_params_per_weekday(
                         tags=new_segment_params.tags,
                         description=new_segment_params.description,
                         passive=new_segment_params.passive,
+                        full_days=new_segment_params.full_days,
                     )
                 )
 
@@ -346,6 +347,7 @@ def split_segment_params_per_weekday(
                 tags=new_segment_params.tags,
                 description=new_segment_params.description,
                 passive=new_segment_params.passive,
+                full_days=new_segment_params.full_days,
             )
         )
 
@@ -364,6 +366,7 @@ def _add(
     current_tag_prio = get_tag_prio(
         new_segment_params.tags, report_settings.tag_settings
     )
+    conflicting_segments = None
 
     for tag in new_segment_params.tags:
         tag_settings = report_settings.tag_settings.get(tag)
@@ -391,8 +394,19 @@ def _add(
 
             # we have just one segment, so we can continue
             new_segment_params = new_segment_params_per_weekday[0]
+        if tag_settings.full_day:
+            # If a tag existst that can coexist with multiple other events, do not look for conflicts
+            conflicting_segments = [
+                segment
+                for segment in db.get_segments_between(start, end)
+                if segment.full_days
+            ]
 
-    conflicting_segments = db.get_segments_between(start, end, exclude_full_days=True)
+    if conflicting_segments is None:
+        conflicting_segments = db.get_segments_between(
+            start, end, exclude_full_days=True
+        )
+
     for conflicting_segment in conflicting_segments:
         print(conflicting_segment.start)
         print(now)
@@ -427,14 +441,22 @@ def _add(
                         if before:
                             ret.extend(
                                 _add(
-                                    before, now, db=db, report_settings=report_settings
+                                    before,
+                                    now,
+                                    db=db,
+                                    report_settings=report_settings,
                                 )
                             )
                         # the conflicting middle segment has a higher prio
                         # we don't need to add it
                         if after:
                             ret.extend(
-                                _add(after, now, db=db, report_settings=report_settings)
+                                _add(
+                                    after,
+                                    now,
+                                    db=db,
+                                    report_settings=report_settings,
+                                )
                             )
                         return ret
 

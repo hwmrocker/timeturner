@@ -219,11 +219,7 @@ def parse_add_args(
             end = end_of_day(start)
         else:
             end = end_of_day(end)
-    return NewSegmentParams(
-        start=start,
-        end=end,
-        tags=tags,
-    )
+    return NewSegmentParams(start=start, end=end, tags=tags, full_days=prefer_full_days)
 
 
 def parse_list_args(

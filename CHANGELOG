@@ -2,6 +2,9 @@
 
 ## 0.6.0 (unreleased)
 
+* breaking: the setting `table_name` is now restricted to a-z and _
+* full day activities are now supported and can coexist with other activities
+
 ## 0.5.1 (2023-09-27)
 
 * fix regression: show negative over time in `list` command again

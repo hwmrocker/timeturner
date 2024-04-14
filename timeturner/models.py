@@ -88,3 +88,4 @@ class NewSegmentParams(BaseModel):
     tags: list[str]
     description: str = ""
     passive: bool = False
+    full_days: bool = False

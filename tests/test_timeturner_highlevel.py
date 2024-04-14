@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from functools import partial
+from itertools import zip_longest
 
 import pytest
 
@@ -315,12 +316,15 @@ ADD_TEST_CASES = [
         ],
         [
             (parse("1985-12-20"), parse("1985-12-21"), ["vacation"]),
+            # 21 & 22 Saturday and Sunday
             (parse("1985-12-23"), parse("1985-12-24"), ["vacation"]),
             (parse("1985-12-24"), parse("1985-12-27"), ["holiday"]),
             (parse("1985-12-27"), parse("1985-12-28"), ["vacation"]),
+            # 28 & 29 Saturday and Sunday
             (parse("1985-12-30"), parse("1985-12-31"), ["vacation"]),
             (parse("1985-12-31"), parse("1986-01-02"), ["holiday"]),
             (parse("1986-01-02"), parse("1986-01-04"), ["vacation"]),
+            # 4 & 5 Saturday and Sunday
             (parse("1986-01-06"), parse("1986-01-07"), ["vacation"]),
         ],
         id="another vacation with multiple holidays",
@@ -366,7 +370,7 @@ ADD_TEST_CASES = [
         [["9:00", "-", "+3h"], ["@sick"]],
         [
             (parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), []),
-            (parse("1985-05-25 12:00:00"), None, ["sick"]),
+            (parse("1985-05-25 00:00:00"), parse("1985-05-26 00:00:00"), ["sick"]),
         ],
         id="full day tag can coexist with other segments",
     ),
@@ -394,7 +398,7 @@ def test_add_segment(
     start_and_end_times = [
         (segment.start, segment.end, sorted(segment.tags)) for segment in all_segments
     ]
-    for observed, expected in zip(
+    for observed, expected in zip_longest(
         sorted(start_and_end_times), sorted(expected_start_end_times)
     ):
         print(f"{observed=}")

@@ -16,12 +16,13 @@ tomlkit = "^0.11.6"
 [tool.poetry.group.dev.dependencies]
 pip-audit = "^2.4.14"
 pytest = "^7.2.1"
-pytest-watch = "^4.2.0"
 freezegun = "^1.2.2"
 pytest-dependency = "^0.5.1"
 pyright = "^1.1.298"
 pytest-cov = "^4.0.0"
 ruff = "^0.0.254"
+tox-uv = "^1.7.0"
+pytest-watcher = "^0.4.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

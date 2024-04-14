@@ -421,6 +421,7 @@ class DatabaseConnection:
         self,
         start: datetime,
         end: Optional[datetime] = None,
+        exclude_full_days: bool = False,
     ) -> list[PensiveRow]:
         """
         Get all segments between the given start and end times.
@@ -434,10 +435,13 @@ class DatabaseConnection:
         end_is_none = end is None
         if end is None:
             end = start
+        exclude_sql = ""
+        if exclude_full_days:
+            exclude_sql = "AND full_days == FALSE"
         cursor.execute(
             f"""
             SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
-            WHERE start <= ? AND (end > ? OR end IS NULL)
+            WHERE start <= ? AND (end > ? OR end IS NULL) {exclude_sql}
             ORDER BY start ASC
             """,
             (str(end), str(start)),

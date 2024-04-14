@@ -90,7 +90,10 @@ class TagSettings(BaseModel):
     track_work_time_passive: bool = False
     track_break_time: bool = False
     track_over_time: bool = False
-    only_cover_work_days: bool = False
+    only_cover_work_days: bool = (
+        False  # This is useful for vacation, you can only take vacation days on woking days
+        # and not saturday or sunday
+    )
 
     @root_validator(allow_reuse=True)
     def check_tag_settings(cls, values):
