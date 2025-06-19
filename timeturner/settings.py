@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Any, Iterable, Literal
 
 import tomlkit
-from pydantic import model_validator, BaseModel, root_validator
+from pydantic import BaseModel, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 valid_table_name = re.compile(r"^[a-z_]+$")
 
@@ -26,7 +26,10 @@ class Settings(BaseSettings):
     @property
     def config_path(self) -> Path:
         return self.config_home / self.config_file
-    model_config = SettingsConfigDict(env_file_encoding="utf-8", env_prefix="timeturner_")
+
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8", env_prefix="timeturner_"
+    )
 
 
 config_settings = Settings()
@@ -45,14 +48,14 @@ class DatabaseSettings(BaseModel):
     home: Path = config_settings.config_home
     table_name: str = "pensieve"
 
-    @root_validator
-    def validate_table_name(cls, values):
-        table_name = values.get("table_name")
+    @model_validator(mode="after")
+    def validate_table_name(self):
+        table_name = self.table_name
         if not valid_table_name.match(table_name):
             raise ValueError(
                 "table_name must be in lowercase, only contain letters and underscores"
             )
-        return values
+        return self
 
     @property
     def database_path(self) -> Path:
@@ -93,32 +96,32 @@ class TagSettings(BaseModel):
         # and not saturday or sunday
     )
 
-    @model_validator()
+    @model_validator(mode="before")
     @classmethod
     def check_tag_settings(cls, values):
-        if values["track_work_time"] and values["track_work_time_passive"]:
+        if "track_work_time" in values and "track_work_time_passive" in values:
             raise ValueError(
                 "track_work_time and track_work_time_passive "
                 "cannot be set at the same time"
             )
-        if values["track_work_time"] and values["track_break_time"]:
+        if "track_work_time" in values and "track_break_time" in values:
             raise ValueError(
                 "track_work_time and track_break_time cannot be set at the same time"
             )
-        if values["track_work_time_passive"] and values["track_break_time"]:
+        if "track_work_time_passive" in values and "track_break_time" in values:
             raise ValueError(
                 "track_work_time_passive and track_break_time "
                 "cannot be set at the same time"
             )
-        if values["only_cover_work_days"] and not values["full_day"]:
+        if "only_cover_work_days" in values and "full_day" not in values:
             raise ValueError("only_cover_work_days can only be set if full_day is set")
 
-        if values["track_over_time"] and not values["track_work_time"]:
+        if "track_over_time" in values and "track_work_time" not in values:
             raise ValueError(
                 "track_over_time can only be set if track_work_time is set"
             )
 
-        if values["track_work_time"] and values["full_day"]:
+        if "track_work_time" in values and "full_day" in values:
             raise ValueError("track_work_time cannot be set if full_day is set")
 
         return values
@@ -200,23 +203,19 @@ class ReportSettings(BaseModel):
             return max(tag_settings, key=lambda tag: tag.priority)
         return DefaultTagSettings()
 
-    @root_validator
-    def validate_tag_settings(cls, values):
-        avaliable_tags = set(values["tag_settings"].keys())
+    @model_validator(mode="after")
+    def validate_tag_settings(self):
+        avaliable_tags = set(self.tag_settings.keys())
         required_tags = {
-            values["holiday_tag"],
-            values["passive_travel_tag"],
+            self.holiday_tag,
+            self.passive_travel_tag,
         }
         missing_tags = required_tags - avaliable_tags
         if missing_tags:
             raise ValueError(
                 f"tag_settings missing required tags: {', '.join(missing_tags)}"
             )
-        # implement when writing tests for this
-        # for tag_name, tag in values["tag_settings"].items():
-        #     if isinstance(tag, dict):
-        #         tag["name"] = tag_name
-        return values
+        return self
 
 
 class TimeTurnerSettings(Settings):
