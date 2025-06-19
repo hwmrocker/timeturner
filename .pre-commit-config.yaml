@@ -1,0 +1,10 @@
+# Pre-commit configuration to run ruff format on staged Python files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        types: [python]
+        additional_dependencies: []

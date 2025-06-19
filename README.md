@@ -106,7 +106,6 @@ TODOs:
 - [ ] DB migrations
 - [ ] show and generate tui output
 - [ ] Add section about contributions
-- [ ] Add precommit hook to ensure code is formatted
 - [ ] Generate docstrings for DB methods
 - [ ] Remove import command (it contains assumptions that will not be true for everyone)
   - [ ] Document how to import data from other time trackers

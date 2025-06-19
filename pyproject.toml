@@ -51,6 +51,7 @@ show_missing = true
 dev-dependencies = [
     "freezegun>=1.5.2",
     "pip-audit>=2.9.0",
+    "pre-commit>=4.2.0",
     "pyright>=1.1.402",
     "pytest-cov>=6.2.1",
     "pytest-dependency>=0.6.0",
