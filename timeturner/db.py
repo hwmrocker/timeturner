@@ -46,6 +46,16 @@ class DatabaseConnection:
         *,
         report_settings: "ReportSettings | None" = None,
     ):
+        """
+        Initialize the DatabaseConnection.
+
+        Args:
+            database_file (str): Path to the SQLite database file.
+            table_name (str): Name of the table to use for storing segments.
+            report_settings (ReportSettings | None): Optional report settings for migrations.
+
+        This will create the table if it does not exist.
+        """
         self.table_name = table_name
         self.database_file = database_file
         self.connection = sqlite3.connect(self.database_file)
@@ -54,6 +64,16 @@ class DatabaseConnection:
         # self.migrate(up_to_version=2)
 
     def migrate(self, up_to_version: int, report_settings: "ReportSettings") -> None:
+        """
+        Migrate the database schema to the specified version.
+
+        Args:
+            up_to_version (int): The version to migrate the database to.
+            report_settings (ReportSettings): Settings used during migration.
+
+        Raises:
+            ValueError: If the current version is greater than the target version.
+        """
         current_version = self.version()
         if current_version == up_to_version:
             return
@@ -74,6 +94,12 @@ class DatabaseConnection:
             self.connection.commit()
 
     def _migrate_to_2(self, report_settings) -> None:
+        """
+        Perform migration to database version 2.
+
+        Args:
+            report_settings: Settings used to determine full day tags.
+        """
         print("Migrating database to version 2 ...")
         cursor = self.connection.cursor()
         cursor.execute(
@@ -115,6 +141,9 @@ class DatabaseConnection:
         print("Migration to version 2 complete")
 
     def create_table(self):
+        """
+        Create the main, tags, and migration tables if they do not exist.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -158,6 +187,12 @@ class DatabaseConnection:
         self.connection.commit()
 
     def version(self):
+        """
+        Get the current database schema version.
+
+        Returns:
+            int: The current version number.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             """
@@ -178,6 +213,20 @@ class DatabaseConnection:
         tags: list[str] | None = None,
         description: str | None = None,
     ) -> PensiveRow:
+        """
+        Add a new segment to the database.
+
+        Args:
+            start (datetime): Start time of the segment.
+            end (datetime | None): End time of the segment.
+            passive (bool | None): Whether the segment is passive.
+            full_days (bool | None): Whether the segment spans full days.
+            tags (list[str] | None): Tags associated with the segment.
+            description (str | None): Description of the segment.
+
+        Returns:
+            PensiveRow: The inserted segment row.
+        """
         # fix passive if it is None
         if passive is None:
             passive = False
@@ -219,6 +268,15 @@ class DatabaseConnection:
         return cast(PensiveRow, self.get_segment(pk))
 
     def insert_or_get_tag_pk(self, tag: str) -> int:
+        """
+        Insert a tag into the tags table if it does not exist, or get its primary key.
+
+        Args:
+            tag (str): The tag to insert or look up.
+
+        Returns:
+            int: The primary key of the tag.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             """
@@ -241,6 +299,15 @@ class DatabaseConnection:
         return result[0]
 
     def get_tags_for_segment(self, pk: int) -> list[str]:
+        """
+        Get all tags associated with a segment.
+
+        Args:
+            pk (int): Primary key of the segment.
+
+        Returns:
+            list[str]: List of tag strings.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -262,6 +329,21 @@ class DatabaseConnection:
         tags: list[str] | None | Sentinel = sentinel,
         description: str | None | Sentinel = sentinel,
     ) -> None:
+        """
+        Update an existing segment in the database.
+
+        Args:
+            pk (int): Primary key of the segment to update.
+            start (datetime | Sentinel): New start time, or sentinel to leave unchanged.
+            end (datetime | None | Sentinel): New end time, or sentinel to leave unchanged.
+            passive (bool | None | Sentinel): New passive value, or sentinel to leave unchanged.
+            full_days (bool | None | Sentinel): New full_days value, or sentinel to leave unchanged.
+            tags (list[str] | None | Sentinel): New tags, or sentinel to leave unchanged.
+            description (str | None | Sentinel): New description, or sentinel to leave unchanged.
+
+        Raises:
+            ValueError: If tags is not a list, None, or not set.
+        """
         elements_to_update = []
         values_to_update = []
         if start is not sentinel:
@@ -351,6 +433,15 @@ class DatabaseConnection:
         self.connection.commit()
 
     def get_latest_segment(self, filter_closed_segments=False) -> PensiveRow | None:
+        """
+        Get the most recently started segment.
+
+        Args:
+            filter_closed_segments (bool): If True, only consider segments that are not closed (end is NULL).
+
+        Returns:
+            PensiveRow | None: The latest segment, or None if no segments exist.
+        """
         cursor = self.connection.cursor()
         where_clause = ""
         if filter_closed_segments:
@@ -380,6 +471,12 @@ class DatabaseConnection:
         )
 
     def delete_segment(self, pk: int) -> None:
+        """
+        Delete a segment from the database.
+
+        Args:
+            pk (int): Primary key of the segment to delete.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -390,6 +487,15 @@ class DatabaseConnection:
         self.connection.commit()
 
     def get_segment(self, pk: int) -> PensiveRow | None:
+        """
+        Retrieve a segment by its primary key.
+
+        Args:
+            pk (int): Primary key of the segment.
+
+        Returns:
+            PensiveRow | None: The segment row, or None if not found.
+        """
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -426,10 +532,16 @@ class DatabaseConnection:
         """
         Get all segments between the given start and end times.
 
-        This includes segments that start before the given start time and / or end after
+        This includes segments that start before the given start time and/or end after
         the given end time.
 
-        end is exclusive, i.e. segments that end at the given end time are not included.
+        Args:
+            start (datetime): Start of the interval.
+            end (Optional[datetime]): End of the interval (exclusive). If None, only segments starting after 'start' are included.
+            exclude_full_days (bool): If True, exclude segments marked as full_days.
+
+        Returns:
+            list[PensiveRow]: List of matching segment rows.
         """
         cursor = self.connection.cursor()
         end_is_none = end is None
@@ -489,6 +601,12 @@ class DatabaseConnection:
         return collected_rows
 
     def get_all_segments(self) -> list[PensiveRow]:
+        """
+        Retrieve all segments from the database.
+
+        Returns:
+            list[PensiveRow]: List of all segment rows.
+        """
         cursor = self.connection.cursor()
 
         cursor.execute(
