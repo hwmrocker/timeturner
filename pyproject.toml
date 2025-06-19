@@ -1,6 +1,6 @@
 [project]
 name = "timeturner"
-version = "0.5.1"
+version = "0.6.0"
 description = ""
 authors = [{ name = "Olaf Gladis", email = "olaf@gladis.org" }]
 requires-python = "~=3.10"

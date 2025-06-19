@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.6.0 (unreleased)
+## 0.6.x (unreleased)
+
+## 0.6.0 (2025-06-19)
 
 * breaking: the setting `table_name` is now restricted to a-z and _
 * full day activities are now supported and can coexist with other activities
