@@ -1,10 +1,10 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import partial
 from itertools import zip_longest
 
 import pytest
 
-from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse
+from tests.helpers import freeze_time_at, freeze_time_at_1985_05_25__15_34_12, parse
 from timeturner import timeturner
 from timeturner.db import DatabaseConnection
 from timeturner.settings import ReportSettings, TagSettings
@@ -386,7 +386,7 @@ ADD_TEST_CASES = [
 
 
 @pytest.mark.parametrize("partial_functions, expected_start_end_times", ADD_TEST_CASES)
-@freeze_time_at_1985_25_05__15_34_12
+@freeze_time_at_1985_05_25__15_34_12
 def test_add_segment(
     db: DatabaseConnection,
     partial_functions,
@@ -439,7 +439,7 @@ LIST_SEGMENTS_TESTS = [
 
 
 @pytest.mark.parametrize("query, expected_days", LIST_SEGMENTS_TESTS)
-@freeze_time_at_1985_25_05__15_34_12
+@freeze_time_at_1985_05_25__15_34_12
 def test_list_segments(db: DatabaseConnection, query, expected_days):
     report_settings = ReportSettings()
     timeturner.add(
@@ -453,3 +453,65 @@ def test_list_segments(db: DatabaseConnection, query, expected_days):
         db=db,
     )
     assert [summary.day for summary in summaries] == expected_days
+
+
+def tt_test_case_summary(
+    input_args: list[list[str]],
+    expected: dict[str, timedelta],
+    id: str,
+):
+    prepared_partials = []
+    for args in input_args:
+        func = getattr(timeturner, "add")
+        prepared_partials.append(partial(func, args))
+    return pytest.param(
+        prepared_partials,
+        expected,
+        id=id,
+    )
+
+
+LIST_SEGMENTS_SUMMARY_TESTS = [
+    tt_test_case_summary(
+        [
+            ["7:30", "-", "+5h"],
+            ["@sick"],
+        ],
+        [dict(over_time=timedelta(hours=0))],
+        "you will not get negative overtime when you get sick during work dbgnow",
+    )
+]
+
+
+@pytest.mark.parametrize(
+    "partial_functions, expected_summaries", LIST_SEGMENTS_SUMMARY_TESTS
+)
+@freeze_time_at(day=23)
+def test_list_segments_summary(db, partial_functions, expected_summaries):
+    report_settings = ReportSettings()
+    from pprint import pprint
+
+    for func in partial_functions:
+        func(db=db, report_settings=default_report_settings)
+
+    summaries = timeturner.list_(
+        ["1d"],
+        report_settings=report_settings,
+        db=db,
+    )
+
+    observed_summaries = []
+    for expected_summary, observed_full_summary in zip(
+        expected_summaries, [s.summary for s in summaries]
+    ):
+        observed_summary = dict()
+        for key in expected_summary.keys():
+            observed_summary[key] = getattr(observed_full_summary, key)
+
+        observed_summaries.append(observed_summary)
+
+    print("observed_summaries:")
+    pprint(observed_summaries)
+    print("expected_summaries:")
+    pprint(expected_summaries)
+    assert expected_summaries == observed_summaries

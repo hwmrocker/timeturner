@@ -4,6 +4,7 @@
 
 * breaking: the setting `table_name` is now restricted to a-z and _
 * full day activities are now supported and can coexist with other activities
+* no overtime panalties when you become sick during the day
 
 ## 0.5.1 (2023-09-27)
 

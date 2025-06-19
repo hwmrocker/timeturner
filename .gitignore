@@ -5,3 +5,10 @@
 *.db
 __pycache__
 *.pyc
+dist/
+
+.pants.d
+.pids
+*.backup-*
+*.pex
+.ruff_cache

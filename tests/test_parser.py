@@ -1,6 +1,6 @@
 import pytest
 
-from tests.helpers import freeze_time_at_1985_25_05__15_34_12, parse, test_now
+from tests.helpers import freeze_time_at_1985_05_25__15_34_12, parse, test_now
 from timeturner import models, parser
 from timeturner.helper import dt_add, dt_subtract, end_of, end_of_day, start_of
 from timeturner.settings import ReportSettings
@@ -119,7 +119,7 @@ SINGLE_TIME_EXAMPLES = [
 
 
 @pytest.mark.parametrize("components, expected", SINGLE_TIME_EXAMPLES)
-@freeze_time_at_1985_25_05__15_34_12
+@freeze_time_at_1985_05_25__15_34_12
 def test_single_time_parse(components, expected):
     assert parser.single_time_parse(components) == expected
 
@@ -233,7 +233,7 @@ PARSE_ADD_ARGS_EXAMPLES = [
 
 
 @pytest.mark.parametrize("args, kwargs, expected", PARSE_ADD_ARGS_EXAMPLES)
-@freeze_time_at_1985_25_05__15_34_12
+@freeze_time_at_1985_05_25__15_34_12
 def test_parse_add_args(args, kwargs, expected):
     add_kwargs = dict(
         report_settings=default_report_settings,
@@ -391,7 +391,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
 
 
 @pytest.mark.parametrize("args, config, expected", PARSE_LIST_ARGS_EXAMPLES)
-@freeze_time_at_1985_25_05__15_34_12
+@freeze_time_at_1985_05_25__15_34_12
 def test_parse_list_args(args, config, expected):
     observed = parser.parse_list_args(args, **config)
     assert observed == expected

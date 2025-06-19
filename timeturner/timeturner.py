@@ -138,16 +138,27 @@ def get_daily_summary(
     required_work_duration = report_settings.worktime_per_weekday[
         day.weekday()
     ].duration
+    print(f"{required_work_duration=}")
     day_type = DayType.WORK if required_work_duration else DayType.WEEKEND
     if not track_over_time:
         required_work_duration = timedelta()
+
+    # Special handling: if there is a full-day sick segment and at least one work segment,
+    # set work_time to 8:00 and overtime to 0:00
+    sick_tag = "sick"
+    has_full_day_sick = sick_tag in tags
+
+    over_time = work_time - required_work_duration
+    if has_full_day_sick and over_time < timedelta():
+        # when you are sick, you cannot have negative overtime
+        over_time = timedelta()
 
     return DailySummary(
         day=day,
         day_type=day_type,
         work_time=work_time,
         break_time=break_time,
-        over_time=work_time - required_work_duration,
+        over_time=over_time,
         start=start,
         end=end,
         by_tag=by_tag,
