@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import date, datetime, timedelta, timezone
-from typing import Iterator
+from typing import Iterator, Union, overload
 
 
 def start_of(dt: datetime, unit: str) -> datetime:
@@ -31,7 +31,13 @@ def start_of(dt: datetime, unit: str) -> datetime:
     return new_value + additional_delta
 
 
-def dt_add(dt: datetime, weeks=0, **kwargs) -> datetime:
+@overload
+def dt_add(dt: datetime, weeks=0, **kwargs) -> datetime: ...
+@overload
+def dt_add(dt: date, weeks=0, **kwargs) -> date: ...
+
+
+def dt_add(dt: Union[datetime, date], weeks=0, **kwargs) -> Union[datetime, date]:
     if weeks:
         kwargs["days"] = kwargs.get("days", 0) + weeks * 7
     print(f"dt: {dt!r}, kwargs: {kwargs!r}")
@@ -110,3 +116,10 @@ def parse(date_string) -> datetime:
     """Parse a date string and adding the local timezone."""
     dt = datetime.fromisoformat(date_string)
     return dt.replace(tzinfo=local_tz)
+
+
+def get_tz_offset(dt: datetime) -> int:
+    offset_delta = dt.utcoffset()
+    if offset_delta is None:
+        raise ValueError("The datetime object must be timezone-aware.")
+    return -int(offset_delta.total_seconds() // (60 * 60))

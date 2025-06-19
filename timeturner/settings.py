@@ -35,8 +35,8 @@ class Settings(BaseSettings):
 config_settings = Settings()
 
 
-def load_config_file(settings: BaseSettings) -> dict[str, Any]:
-    encoding = settings.__config__.env_file_encoding
+def load_config_file(settings: "TimeTurnerSettings") -> dict[str, Any]:
+    encoding = settings.model_config.get("env_file_encoding", "utf-8")
     config_file = config_settings.config_path
     if not config_file.exists():
         return {}

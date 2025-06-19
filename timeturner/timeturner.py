@@ -45,10 +45,6 @@ def get_daily_summary(
     track_work_time = True
     tags = set(tag for segment in segments for tag in segment.tags)
 
-    has_full_day_tag = report_settings.has_full_day_tags(tags)
-    # if has_full_day_tag:
-    #     assert len(segments) == 1
-
     track_work_time = True
     track_break_time = False
     track_over_time = True

@@ -29,7 +29,7 @@ def callback(
     if output is not None:
         if output not in ("json", "rich"):
             raise typer.BadParameter("Output must be either 'json' or 'rich'")
-        settings.report.output = output
+        settings.report.output = output.value
 
 
 @app.command("l", hidden=True)

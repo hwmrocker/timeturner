@@ -74,7 +74,7 @@ class DatabaseConnection:
             self.connection.commit()
 
     def _migrate_to_2(self, report_settings) -> None:
-        print(f"Migrating database to version 2 ...")
+        print("Migrating database to version 2 ...")
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
@@ -112,7 +112,7 @@ class DatabaseConnection:
             print()
 
         self.connection.commit()
-        print(f"Migration to version 2 complete")
+        print("Migration to version 2 complete")
 
     def create_table(self):
         cursor = self.connection.cursor()
@@ -250,7 +250,7 @@ class DatabaseConnection:
             """,
             (pk,),
         )
-        return [tag for tag, in cursor.fetchall()]
+        return [tag for (tag,) in cursor.fetchall()]
 
     def update_segment(
         self,

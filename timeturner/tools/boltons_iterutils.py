@@ -65,4 +65,4 @@ def pairwise_iter(src: Iterable[T]) -> Iterator[tuple[T, T]]:
     >>> list(pairwise_iter(range(1)))
     []
     """
-    return windowed_iter(src, 2)
+    return windowed_iter(src, 2)  # type: ignore[return-value]

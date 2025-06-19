@@ -457,7 +457,7 @@ def test_list_segments(db: DatabaseConnection, query, expected_days):
 
 def tt_test_case_summary(
     input_args: list[list[str]],
-    expected: dict[str, timedelta],
+    expected: list[dict[str, timedelta]],
     id: str,
 ):
     prepared_partials = []
@@ -487,7 +487,9 @@ LIST_SEGMENTS_SUMMARY_TESTS = [
     "partial_functions, expected_summaries", LIST_SEGMENTS_SUMMARY_TESTS
 )
 @freeze_time_at(day=23)
-def test_list_segments_summary(db, partial_functions, expected_summaries):
+def test_list_segments_summary(
+    db, partial_functions, expected_summaries: list[dict[str, timedelta]]
+):
     report_settings = ReportSettings()
     from pprint import pprint
 
