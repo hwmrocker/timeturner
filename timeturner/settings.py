@@ -5,10 +5,11 @@ from pathlib import Path
 from typing import Any, Iterable, Literal
 
 import tomlkit
-from pydantic import BaseModel, BaseSettings, root_validator
+from pydantic import model_validator, BaseModel, root_validator
 
 from timeturner import __COMMIT__, __VERSION__
 from timeturner.db import DatabaseConnection
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 valid_table_name = re.compile(r"^[a-z_]+$")
 
@@ -25,10 +26,7 @@ class Settings(BaseSettings):
     @property
     def config_path(self) -> Path:
         return self.config_home / self.config_file
-
-    class Config:
-        env_file_encoding = "utf-8"
-        env_prefix = "timeturner_"
+    model_config = SettingsConfigDict(env_file_encoding="utf-8", env_prefix="timeturner_")
 
 
 config_settings = Settings()
@@ -95,7 +93,8 @@ class TagSettings(BaseModel):
         # and not saturday or sunday
     )
 
-    @root_validator(allow_reuse=True)
+    @model_validator()
+    @classmethod
     def check_tag_settings(cls, values):
         if values["track_work_time"] and values["track_work_time_passive"]:
             raise ValueError(
@@ -227,6 +226,8 @@ class TimeTurnerSettings(Settings):
     version: str = __VERSION__
     commit: str = __COMMIT__
 
+    # TODO[pydantic]: We couldn't refactor this class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config:
         env_file_encoding = "utf-8"
         env_prefix = "timeturner_"

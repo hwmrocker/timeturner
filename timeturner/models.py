@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta
 from enum import Enum, auto
 from typing import Optional, cast
 
-from pydantic import BaseModel, validator
+from pydantic import field_validator, BaseModel
 
 from timeturner.helper import now_with_tz
 
@@ -34,7 +34,8 @@ class TimeSegment(BaseModel):
     tags: list[str] = []
     description: str | None = None
 
-    @validator("start")
+    @field_validator("start")
+    @classmethod
     def parse_start(cls, value: str | datetime) -> datetime:
         if isinstance(value, datetime):
             return value
@@ -43,13 +44,15 @@ class TimeSegment(BaseModel):
             return new_value
         raise ValueError(f"Could not parse {value} as a datetime")
 
-    @validator("end")
+    @field_validator("end")
+    @classmethod
     def parse_end(cls, value: str | datetime | None) -> datetime | None:
         if value is None:
             return None
         return cls.parse_start(value)
 
-    @validator("tags")
+    @field_validator("tags")
+    @classmethod
     def parse_tags(cls, value: str | list[str] | None) -> list[str] | None:
         if not value:
             # we want to return a new empty list, not reuse the default empty list
@@ -84,7 +87,7 @@ class SegmentsByDay(BaseModel):
 
 class NewSegmentParams(BaseModel):
     start: datetime
-    end: Optional[datetime]
+    end: Optional[datetime] = None
     tags: list[str]
     description: str = ""
     passive: bool = False

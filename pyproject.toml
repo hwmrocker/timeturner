@@ -8,8 +8,9 @@ readme = "README.md"
 dependencies = [
     "rich",
     "typer-slim[standard]",
-    "pydantic>=1.10.5,<2",
+    "pydantic>=2,",
     "tomlkit>=0.11.6,<0.12",
+    "pydantic-settings>=2.9.1",
 ]
 
 [project.scripts]
