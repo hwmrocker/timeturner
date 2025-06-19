@@ -15,9 +15,10 @@ It has the following columns:
 """
 
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, Optional, cast
 
+from timeturner.helper import end_of_day, start_of
 from timeturner.models import PensiveRow
 
 if TYPE_CHECKING:
@@ -513,6 +514,45 @@ class DatabaseConnection:
             passive = False
         if full_days is None:
             full_days = False
+        return PensiveRow(
+            pk=pk,
+            start=start,
+            end=end,
+            passive=passive,
+            full_days=full_days,
+            tags=self.get_tags_for_segment(pk),
+            description=description,
+        )
+
+    def get_full_day_segment_by_date(
+        self,
+        date: datetime | date,
+    ) -> PensiveRow | None:
+        """
+        Get a holiday segment by its date.
+
+        Args:
+            date (datetime): The date to search for.
+
+        Returns:
+            PensiveRow | None: The holiday segment row, or None if not found.
+        """
+        cursor = self.connection.cursor()
+        print(str(start_of(date, "day")), str(end_of_day(date)))
+        cursor.execute(
+            f"""
+            SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
+            WHERE full_days = TRUE AND start <= ? AND (end IS NULL OR end = ?)
+            """,
+            (str(start_of(date, "day")), str(end_of_day(date))),
+        )
+
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        pk, start, end, passive, full_days, description = row
+        if passive is None:
+            passive = False
         return PensiveRow(
             pk=pk,
             start=start,

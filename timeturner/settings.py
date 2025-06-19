@@ -4,6 +4,7 @@ from os import environ
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
+import holidays
 import tomlkit
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -172,6 +173,11 @@ class ReportSettings(BaseModel):
         ),
     }
 
+    country: str = "DE"  # Country code for bank holidays (e.g., "DE" for Germany)
+    subdivision: str | None = (
+        "NW"  # Subdivision code (e.g., "BY" for Bavaria), or None for national holidays
+    )
+
     def is_work_day(self, day: date) -> bool:
         weekday = day.weekday()
         if not self.worktime_per_weekday:
@@ -215,6 +221,25 @@ class ReportSettings(BaseModel):
             raise ValueError(
                 f"tag_settings missing required tags: {', '.join(missing_tags)}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_country_and_subdivision(self):
+        """
+        Validate that the country is supported by the holidays package and the subdivision (if set) is valid for that country.
+        """
+
+        supported_countries = holidays.list_supported_countries()
+        if self.country not in supported_countries:
+            raise ValueError(
+                f"Country '{self.country}' is not supported by the holidays package. Supported countries: {', '.join(sorted(supported_countries))}"
+            )
+        if self.subdivision:
+            supported_subdivisions = supported_countries.get(self.country, [])
+            if self.subdivision not in supported_subdivisions:
+                raise ValueError(
+                    f"Subdivision '{self.subdivision}' is not valid for country '{self.country}'. Supported subdivisions: {', '.join(sorted(supported_subdivisions))}"
+                )
         return self
 
 

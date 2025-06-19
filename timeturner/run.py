@@ -1,3 +1,4 @@
+import warnings
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -105,6 +106,67 @@ def import_(text_file: Path):
 @app.command(name="config")
 def config():
     console.print_json(data=settings, default=pydantic_encoder)
+
+
+@app.command("add-holidays")
+def add_holidays(
+    year: int = typer.Argument(None),
+    country: str = typer.Option(None, help="Country code for holidays (e.g. DE)"),
+    subdivision: str = typer.Option(
+        None, help="Subdivision code (e.g. BY for Bavaria)"
+    ),
+):
+    """
+    Import all holidays for the given year as segments with the holiday tag.
+    """
+    # Use defaults from settings if not provided
+    report_settings = settings.report
+    db = settings.database.connection
+
+    # Determine year
+    import datetime
+
+    if year is None:
+        year = datetime.date.today().year
+
+    # Determine country and subdivision
+    country_val = country or report_settings.country
+    subdivision_val = (
+        subdivision if subdivision is not None else report_settings.subdivision
+    )
+
+    if not country_val:
+        raise typer.BadParameter(
+            "No country provided for holiday import. Please specify --country or set it in your config."
+        )
+
+    if country and not subdivision:
+        warnings.warn(
+            f"Country '{country_val}' provided but no subdivision. Only nationwide holidays will be imported."
+        )
+
+    try:
+        added = timeturner.add_holidays(
+            year=year,
+            country=country_val,
+            subdivision=subdivision_val,
+            report_settings=report_settings,
+            db=db,
+        )
+    except Exception as e:
+        raise
+        raise typer.Exit(f"Failed to import holidays: {e}")
+
+    print(
+        f"Imported {len(added)} holidays for {country_val}{'/' + subdivision_val if subdivision_val else ''} in {year}."
+    )
+    if settings.report.output == "json":
+        console.print_json(
+            data=[seg.model_dump() for seg in added], default=pydantic_encoder
+        )
+    else:
+        for seg in added:
+            rich_output.print_pretty_record(seg)
 
 
 def entrypoint():

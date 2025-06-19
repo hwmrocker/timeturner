@@ -90,7 +90,7 @@ weekends and only add working days as vacation.
 
 ### Automatic Rest Periods
 
-If you forget to track a rest period, the time tracker will reduce the required rest period before showing it. For periods greater than 4h 15 are reducted, for periods greater than 6:15 additional 30m are reducted.
+If you forget to track a rest period, the time tracker will reduce the required rest period before showing it. For periods greater than 4h the reducted amount is 15m. For periods greater than 6h 15m additional 30m are reducted.
 
 
 
@@ -142,7 +142,8 @@ TODOS by command:
   - [ ] add tests
   - [ ] MM-DD or YYYY-MM-DD should only show show a single day
 
-- [ ] import holidays
+- [ ] add settings wizzard, asks for country/region, work week days, default work time, etc.
+  - [ ] add tests
 
 - [ ] export
   - [ ] probably like list --format jsonl

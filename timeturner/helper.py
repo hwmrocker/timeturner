@@ -5,7 +5,11 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Iterator, Union, overload
 
 
-def start_of(dt: datetime, unit: str) -> datetime:
+def start_of(dt: datetime | date, unit: str) -> datetime:
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        # Convert date to datetime at the start of the day
+        dt = datetime.combine(dt, datetime.min.time())
+
     additional_delta = timedelta()
     if unit == "week":
         unit = "day"
@@ -25,7 +29,6 @@ def start_of(dt: datetime, unit: str) -> datetime:
     args = dict()
     for unit, new_value in units_with_values[index + 1 :]:
         args[unit] = new_value
-    print(f"args: {args}")
     new_value = dt.replace(**args)
 
     return new_value + additional_delta
@@ -99,8 +102,11 @@ def end_of(dt: datetime, unit: str) -> datetime:
     return dt_add(start_of(dt, unit), **{f"{unit}s": 1})
 
 
-def end_of_day(dt: datetime) -> datetime:
+def end_of_day(dt: datetime | date) -> datetime:
     """Return the first possible moment of the next day."""
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        # Convert date to datetime at the start of the day
+        dt = datetime.combine(dt, datetime.min.time())
     return dt_add(start_of(dt, "day"), days=1)
 
 

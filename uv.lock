@@ -292,6 +292,18 @@ wheels = [
 ]
 
 [[package]]
+name = "holidays"
+version = "0.75"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4d/5e/8d93cc1a5ba76671856aeb4e0d539368f3578fd1248621e0dfbf56faecb9/holidays-0.75.tar.gz", hash = "sha256:73441b6f7ca2f2b8f67c1554b6850e5dfd84cb62831b6c756de81c43b1efee73", size = 660030, upload-time = "2025-06-16T23:23:57.404Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/34/f308e49c14ff3fc7ecebfdcd54168b333fd218bbfd2eacf46af775bb4f69/holidays-0.75-py3-none-any.whl", hash = "sha256:f87a75e9274ba60c0ae2b65fb91b8ee1b9547f384875b0fa6ee3e5a45012bdfc", size = 1049515, upload-time = "2025-06-16T23:23:55.437Z" },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.12"
 source = { registry = "https://pypi.org/simple" }
@@ -901,6 +913,7 @@ name = "timeturner"
 version = "0.6.0"
 source = { editable = "." }
 dependencies = [
+    { name = "holidays" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "rich" },
@@ -924,6 +937,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "holidays", specifier = ">=0.75" },
     { name = "pydantic", specifier = ">=2" },
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "rich" },

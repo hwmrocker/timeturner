@@ -3,9 +3,11 @@ from itertools import groupby
 from pathlib import Path
 from typing import Iterator, cast
 
+import holidays
+
 from timeturner import loader
 from timeturner.db import DatabaseConnection
-from timeturner.helper import dt_add, end_of_day, iter_over_days, now_with_tz
+from timeturner.helper import dt_add, end_of_day, iter_over_days, now_with_tz, start_of
 from timeturner.models import (
     DailySummary,
     DayType,
@@ -16,6 +18,108 @@ from timeturner.models import (
 from timeturner.parser import parse_add_args, parse_list_args, single_time_parse
 from timeturner.settings import ReportSettings, TagSettings
 from timeturner.tools.boltons_iterutils import pairwise_iter
+
+
+def add_holidays(
+    year: int,
+    country: str | None,
+    subdivision: str | None,
+    *,
+    report_settings: ReportSettings,
+    db: DatabaseConnection,
+) -> list:
+    """
+    Add all holidays for the given year as segments with the holiday tag.
+
+    Args:
+        year (int): The year for which to import holidays.
+        country (str | None): Country code (overrides report_settings if provided).
+        subdivision (str | None): Subdivision code (overrides report_settings if provided).
+        now (datetime): Current time for reference.
+    Returns:
+        list: List of added segment rows.
+    """
+    now = now_with_tz()
+
+    if not country:
+        raise ValueError("No country provided for holiday import.")
+
+    # Warn if country is set but no subdivision
+    if country and not subdivision:
+        import warnings
+
+        warnings.warn(
+            f"Country '{country}' provided but no subdivision. Only nationwide holidays will be imported."
+        )
+
+    # Load holidays
+    kwargs = {"years": year, "country": country}
+    if subdivision:
+        kwargs["subdiv"] = subdivision
+
+    try:
+        holiday_obj = holidays.country_holidays(**kwargs)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to load holidays for {country} {subdivision or ''}: {e}"
+        )
+
+    added_segments = []
+    for date, name in holiday_obj.items():
+        # If no subdivision, only add holidays that are valid nationwide
+        if not subdivision:
+            # holidays package: only holidays with observed_by_nationwide attribute or present in all subdivisions
+            # But not all providers have this, so we check if the holiday is present in all subdivisions
+            all_subdivs = holidays.list_supported_countries(subdivisions=True).get(
+                country, []
+            )
+            if all_subdivs:
+                is_nationwide = all(
+                    name
+                    in holidays.country_holidays(
+                        country, years=year, subdiv=subdiv
+                    ).get(date, "")
+                    for subdiv in all_subdivs
+                )
+                if not is_nationwide:
+                    continue
+
+        start = start_of(date, "day")
+        existing_holiday = db.get_full_day_segment_by_date(date)
+        print(f"Checking holiday {name} on {date} ({start}) {existing_holiday=}")
+        if existing_holiday and report_settings.holiday_tag in existing_holiday.tags:
+            if existing_holiday.description == name:
+                # Holiday already exists, skip adding it again
+                continue
+            elif not existing_holiday.description:
+                # If the existing holiday has no description, update it
+                updated = db.update_segment(existing_holiday.pk, description=name)
+                added_segments.append(updated)
+                continue
+
+        # Add segment for this holiday, we need to check for conflicts with vacation
+        added = _add(
+            NewSegmentParams(
+                start=start,
+                end=end_of_day(date),  # No end time for holidays
+                tags=[report_settings.holiday_tag],
+                description=name,
+                full_days=True,  # Full day holiday
+            ),
+            now=now,
+            db=db,
+            report_settings=report_settings,
+        )
+        # db.add_segment(
+        #     start=start,
+        #     end=end_of_day(date),  # No end time for holidays
+        #     tags=[report_settings.holiday_tag],
+        #     description=name,
+        #     full_days=True,  # Full day holiday
+        # )
+
+        added_segments.extend(added)
+    return added_segments
 
 
 def get_daily_summary(
