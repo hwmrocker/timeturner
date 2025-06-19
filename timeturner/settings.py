@@ -225,26 +225,11 @@ class TimeTurnerSettings(Settings):
     version: str = __VERSION__
     commit: str = __COMMIT__
 
-    # TODO[pydantic]: We couldn't refactor this class, please create the `model_config` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    class Config:
-        env_file_encoding = "utf-8"
-        env_prefix = "timeturner_"
-        env_nested_delimiter = "__"
-
-        @classmethod
-        def customise_sources(
-            cls,
-            init_settings,
-            env_settings,
-            file_secret_settings,
-        ):
-            del file_secret_settings
-            return (
-                init_settings,
-                env_settings,
-                load_config_file,
-            )
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8",
+        env_prefix="timeturner_",
+        env_nested_delimiter="__",
+    )
 
 
 def DefaultTagSettings(name="no_tag"):

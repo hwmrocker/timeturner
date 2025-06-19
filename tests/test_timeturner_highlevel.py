@@ -478,7 +478,7 @@ LIST_SEGMENTS_SUMMARY_TESTS = [
             ["@sick"],
         ],
         [dict(over_time=timedelta(hours=0))],
-        "you will not get negative overtime when you get sick during work dbgnow",
+        "you will not get negative overtime when you get sick during work",
     )
 ]
 

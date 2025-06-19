@@ -487,7 +487,7 @@ def _add(
             if conflicting_tag_prio <= current_tag_prio:
                 ret = []
                 db.update_segment(conflicting_segment.pk, end=start)
-                ret.append(db.add_segment(**new_segment_params.dict()))
+                ret.append(db.add_segment(**new_segment_params.model_dump()))
                 ret.append(
                     db.add_segment(
                         end,
@@ -508,7 +508,7 @@ def _add(
             else:
                 new_segment_params.start = start = conflicting_segment.end
 
-    return [db.add_segment(**new_segment_params.dict())]
+    return [db.add_segment(**new_segment_params.model_dump())]
 
 
 def end(

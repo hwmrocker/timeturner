@@ -87,7 +87,7 @@ def import_text(db: DatabaseConnection, text_file: Path) -> Iterator[PensiveRow]
     lines = lines[: lines.index(table_separator)]
 
     for entry in extract_segments(lines):
-        yield db.add_segment(**entry.dict())
+        yield db.add_segment(**entry.model_dump())
 
 
 def import_json(db: DatabaseConnection, json_file: Path) -> Iterator[PensiveRow]:
