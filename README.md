@@ -112,7 +112,6 @@ TODOs:
   - [ ] Add mode to import jsonl file
 - [ ] Add logging
   - [ ] allow different log levels for database and application
-- [ ] add test that the last release version in Changelog is the same as in pyproject.toml and app
 - [ ] README
   - [ ] auto generate config options
 
