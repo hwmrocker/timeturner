@@ -31,7 +31,7 @@ def start_of(dt: datetime | date, unit: str) -> datetime:
         args[unit] = new_value
     new_value = dt.replace(**args)
 
-    return new_value + additional_delta
+    return (new_value + additional_delta).replace(tzinfo=None).astimezone()
 
 
 @overload
@@ -65,11 +65,14 @@ def dt_subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
 
         new_year = new_year - year_delta
 
-    return ret.replace(year=new_year, month=new_month)
+    # we want to ensure that the new date uses a valid timezone for this datetime. E.g. when we substrach a month,
+    # we don't want to substract the exact hours, but want the datetime object with the same time but the replaced date.
+    return ret.replace(year=new_year, month=new_month, tzinfo=None).astimezone()
 
 
 def iter_over_days(start: datetime, end: datetime) -> Iterator[date]:
-    end = dt_subtract(end, microseconds=1)
+    end = end - timedelta(microseconds=1)
+    # dt_subtract(end, microseconds=1)
     if end < start:
         return
 
@@ -88,7 +91,7 @@ def end_of(dt: datetime, unit: str) -> datetime:
     """Return the first possible moment of the next unit."""
     if unit == "year":
         new_dt = start_of(dt, "year")
-        return new_dt.replace(year=new_dt.year + 1)
+        return new_dt.replace(year=new_dt.year + 1, tzinfo=None).astimezone()
     if unit == "month":
         new_dt = start_of(dt, "month")
         _, days_of_month = calendar.monthrange(new_dt.year, new_dt.month)

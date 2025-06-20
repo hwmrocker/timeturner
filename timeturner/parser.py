@@ -103,7 +103,7 @@ def parse_time(time: str, now: datetime) -> datetime:
             ret["second"] = int(second)
         case _:
             raise ValueError(f"Invalid time: {time}")
-    return now.replace(**ret)
+    return now.replace(**ret, tzinfo=None).astimezone()
 
 
 def parse_date(date: str, now: datetime) -> datetime:
@@ -120,7 +120,7 @@ def parse_date(date: str, now: datetime) -> datetime:
             ret["day"] = int(day)
         case _:
             raise ValueError(f"Invalid date: {date}")
-    return now.replace(**ret)
+    return now.replace(**ret, tzinfo=None).astimezone()
 
 
 def parse_delta(delta: str, now: datetime) -> datetime:
@@ -177,10 +177,13 @@ def single_time_parse(
             now = parse_time(time, now)
         case [(delta_with_time, ComponentType.DELTA_WITH_TIME)]:
             now = parse_delta_with_time(delta_with_time, now)
-        case [(date, ComponentType.DATE), (time, ComponentType.TIME)] | [
-            (date, ComponentType.NUMBER),
-            (time, ComponentType.TIME),
-        ]:
+        case (
+            [(date, ComponentType.DATE), (time, ComponentType.TIME)]
+            | [
+                (date, ComponentType.NUMBER),
+                (time, ComponentType.TIME),
+            ]
+        ):
             now = parse_date(date, now)
             now = parse_time(time, now)
         case []:

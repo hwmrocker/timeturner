@@ -37,7 +37,7 @@ ITER_OVER_DAYS_TESTS = [
         parse("1985-05-01"),
         parse("1985-05-01"),
         [],
-        id="one day, start and end at midnight",
+        id="when start and end are the same time",
     ),
 ]
 

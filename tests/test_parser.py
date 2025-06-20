@@ -330,14 +330,14 @@ PARSE_LIST_ARGS_EXAMPLES = [
     pytest.param(
         ["4M"],  # checking last 4 months
         dict(),
-        (start_of(test_now.replace(month=2), "month"), end_of(test_now, "month")),
+        (parse("1985-02-01"), parse("1985-06-01")),
         id="4M",
     ),
     pytest.param(
         ["1y"],  # checking current year
         dict(),
-        (start_of(test_now, "year"), end_of(test_now, "year")),
-        id="1y",
+        (parse("1985-01-01"), parse("1986-01-01")),
+        id="1y dbgnow",
     ),
     pytest.param(
         ["2years"],  # checking last and current year

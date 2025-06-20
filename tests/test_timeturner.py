@@ -179,7 +179,7 @@ def check_segments_in_db(db, expected_segments: list[dict], check_type=""):
             {"year": 2024},
             [{"pk": 1, "tags": ["holiday"], "description": None}],
             [{"pk": 1, "tags": ["holiday"], "description": "New Year's Day"}],
-            id="existing holiday segment is updated when description is missing dbgnow",
+            id="existing holiday segment is updated when description is missing",
         ),
         pytest.param(
             [
