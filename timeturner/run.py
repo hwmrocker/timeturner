@@ -169,6 +169,16 @@ def add_holidays(
             rich_output.print_pretty_record(seg)
 
 
+@app.command("version")
+def version():
+    """
+    Print the current version of TimeTurner.
+    """
+    from . import __COMMIT__, __VERSION__
+
+    print(f"TimeTurner version: {__VERSION__} commit: {__COMMIT__}")
+
+
 def entrypoint():
     app()
 
