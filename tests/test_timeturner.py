@@ -1,9 +1,11 @@
 from datetime import date, datetime, time
 
+import holidays
 import pytest
 
 from tests.helpers import parse
 from timeturner import models, timeturner
+from timeturner.db import DatabaseConnection
 from timeturner.models import DayType, NewSegmentParams, PensiveRow
 from timeturner.settings import ReportSettings
 
@@ -91,7 +93,7 @@ def check_segments_in_db(db, expected_segments: list[dict]):
         ),
     ],
 )
-def test_add_holidays_parametrized(precondition, args, precheck, expected):
+def test_add_holidays(precondition, args, precheck, expected):
     db = DatabaseConnection(":memory:")
     report_settings = ReportSettings()
     # 1. load preconditions
@@ -116,10 +118,6 @@ def test_add_holidays_parametrized(precondition, args, precheck, expected):
     # 4. run expected checks
     check_segments_in_db(db, expected)
 
-
-import holidays
-
-from timeturner.db import DatabaseConnection
 
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
