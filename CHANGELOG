@@ -3,6 +3,7 @@
 ## 0.7.0 (unreleased)
 
 * new: added `add-holidays` command to add holidays specific to a country / devision
+* normalized timezone handling
 * updated pydantic dependency to v2
 * better tests and docstrings
 
