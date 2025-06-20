@@ -67,24 +67,8 @@ def add_holidays(
     added_segments = []
     for date, name in holiday_obj.items():
         # If no subdivision, only add holidays that are valid nationwide
-        if not subdivision:
-            # holidays package: only holidays with observed_by_nationwide attribute or present in all subdivisions
-            # But not all providers have this, so we check if the holiday is present in all subdivisions
-            all_subdivs = holidays.list_supported_countries(subdivisions=True).get(
-                country, []
-            )
-            if all_subdivs:
-                is_nationwide = all(
-                    name
-                    in holidays.country_holidays(
-                        country, years=year, subdiv=subdiv
-                    ).get(date, "")
-                    for subdiv in all_subdivs
-                )
-                if not is_nationwide:
-                    continue
 
-        start = start_of(date, "day")
+        start = start_of(date, "day").astimezone()
         existing_holiday = db.get_full_day_segment_by_date(date)
         print(f"Checking holiday {name} on {date} ({start}) {existing_holiday=}")
         if existing_holiday and report_settings.holiday_tag in existing_holiday.tags:
@@ -110,13 +94,6 @@ def add_holidays(
             db=db,
             report_settings=report_settings,
         )
-        # db.add_segment(
-        #     start=start,
-        #     end=end_of_day(date),  # No end time for holidays
-        #     tags=[report_settings.holiday_tag],
-        #     description=name,
-        #     full_days=True,  # Full day holiday
-        # )
 
         added_segments.extend(added)
     return added_segments

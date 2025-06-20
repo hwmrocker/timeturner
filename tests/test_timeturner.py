@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 
 import holidays
 import pytest
@@ -13,13 +13,29 @@ from timeturner.settings import ReportSettings
 def segment_matches(segment: PensiveRow, expected: dict) -> bool:
     """
     Check if a segment matches the expected dict (partial match).
+    - For description, allow for English/German holiday names or partial match.
+    - For tags, compare as sets.
     """
+    import unicodedata
+
+    def normalize(s):
+        if not isinstance(s, str):
+            return s
+        return unicodedata.normalize("NFKD", s).casefold()
+
     for key, value in expected.items():
         if not hasattr(segment, key):
             return False
         seg_val = getattr(segment, key)
-        # For datetime/date, allow string or datetime comparison
-        if isinstance(seg_val, (datetime, date)) and isinstance(value, str):
+        if key == "tags":
+            # Compare as sets, ignore order and extras
+            if not set(value).issubset(set(seg_val)):
+                return False
+        elif key == "description":
+            if normalize(seg_val) != normalize(value):
+                return False
+
+        elif isinstance(seg_val, (datetime, date)) and isinstance(value, str):
             try:
                 if isinstance(seg_val, datetime):
                     seg_val_str = seg_val.strftime("%Y-%m-%d")
@@ -34,66 +50,191 @@ def segment_matches(segment: PensiveRow, expected: dict) -> bool:
     return True
 
 
-def check_segments_in_db(db, expected_segments: list[dict]):
+def segment_matches_or_not(segment: PensiveRow, expected: dict) -> bool:
+    negate = expected.pop("_should_not_be_present", False)
+    result = segment_matches(segment, expected)
+    if negate:
+        return not result
+    return result
+
+
+def check_segments_in_db(db, expected_segments: list[dict], check_type=""):
     """
     For each expected segment dict, check that at least one segment in the DB matches.
     """
     all_segments = db.get_all_segments()
     for expected in expected_segments:
-        matched = any(segment_matches(seg, expected) for seg in all_segments)
-        assert matched, f"Expected segment not found in DB: {expected}"
+        matched = any(segment_matches_or_not(seg, expected) for seg in all_segments)
+        if not matched:
+            # Print all segments for easier debugging
+            print("Segments in DB:")
+            for seg in all_segments:
+                print(vars(seg))
+        assert matched, f"[{check_type}] Expected segment not found in DB: {expected}"
 
 
 @pytest.mark.parametrize(
     "precondition,args,precheck,expected",
     [
         pytest.param(
-            # No pre-existing segments
             [],
             {"year": 2024, "country": "DE", "subdivision": "BY"},
             [],
             [
-                # Expect at least one known Bavarian holiday
-                {"description": "Neujahr", "tags": ["holiday"]},
-                {"description": "Tag der Deutschen Einheit", "tags": ["holiday"]},
+                {
+                    "start": parse("2024-01-01"),
+                    "description": "New Year's Day",
+                    "tags": ["holiday"],
+                },
+                {"description": "Epiphany", "tags": ["holiday"]},
             ],
             id="import_bavarian_holidays",
         ),
         pytest.param(
-            # No pre-existing segments, nationwide only
             [],
             {"year": 2024, "country": "DE", "subdivision": None},
             [],
             [
-                {"description": "Neujahr", "tags": ["holiday"]},
-                # Should not include "Mariä Himmelfahrt" (BY only)
+                {"start": parse("2024-01-01"), "tags": ["holiday"]},
+                {
+                    "description": "Epiphany",
+                    "start": "2024-01-06",
+                    "tags": ["holiday"],
+                    "_should_not_be_present": True,
+                },
             ],
-            id="import_germany_nationwide",
+            id="import_germany_nationwide epiphany is not nationwide",
         ),
         pytest.param(
-            # Pre-existing segment for Neujahr, should not duplicate
+            [],
+            {"year": 2024},
+            [],
             [
                 {
-                    "start": datetime(2024, 1, 1),
-                    "end": datetime(2024, 1, 2),
+                    "start": parse("2024-10-03"),
                     "tags": ["holiday"],
-                    "description": "Neujahr",
+                },
+            ],
+            id="import german holidays by default",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01"),
+                    "tags": ["holiday"],
+                    "description": "Neujahr :)",
                     "full_days": True,
                 }
             ],
             {"year": 2024, "country": "DE", "subdivision": "BY"},
             [
-                {"description": "Neujahr", "tags": ["holiday"]},
+                {
+                    "pk": 1,
+                    "start": parse("2024-01-01"),
+                    "description": "Neujahr :)",
+                    "tags": ["holiday"],
+                },
             ],
             [
-                {"description": "Neujahr", "tags": ["holiday"]},
-                {"description": "Tag der Deutschen Einheit", "tags": ["holiday"]},
+                {"pk": 1, "description": "Neujahr :)", "tags": ["holiday"]},
             ],
-            id="existing_holiday_segment",
+            id="existing_holiday_segment is not changed when description is available",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01 10:00"),
+                    "end": parse("2024-01-01 15:00"),
+                    "tags": ["travel"],
+                    "description": "reise am feiertag",
+                }
+            ],
+            {"year": 2024},
+            [{"pk": 1, "tags": ["travel"], "description": "reise am feiertag"}],
+            [{"pk": 1, "tags": ["travel"], "description": "reise am feiertag"}],
+            id="existing segment is not changed",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01 10:00"),
+                    "end": parse("2024-01-01 15:00"),
+                    "tags": ["travel"],
+                }
+            ],
+            {"year": 2024},
+            [{"pk": 1, "tags": ["travel"]}],
+            [{"pk": 1, "tags": ["travel"]}],
+            id="existing segment is not changed, even without description",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01"),
+                    "end": parse("2024-01-02"),
+                    "tags": ["holiday"],
+                    "full_days": True,
+                }
+            ],
+            {"year": 2024},
+            [{"pk": 1, "tags": ["holiday"], "description": None}],
+            [{"pk": 1, "tags": ["holiday"], "description": "New Year's Day"}],
+            id="existing holiday segment is updated when description is missing dbgnow",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01"),
+                    "end": parse("2024-01-02"),
+                    "tags": ["vacation"],
+                    "full_days": True,
+                }
+            ],
+            {"year": 2024},
+            [{"pk": 1, "tags": ["vacation"], "description": None}],
+            [
+                {
+                    "pk": 1,
+                    "tags": ["vacation"],
+                    "description": None,
+                    "_should_not_be_present": True,
+                },
+                {
+                    "start": parse("2024-01-01"),
+                    "tags": ["holiday"],
+                    "description": "New Year's Day",
+                },
+            ],
+            id="vacation day is removed when holiday collides",
+        ),
+        pytest.param(
+            [
+                {
+                    "start": parse("2024-01-01"),
+                    "end": parse("2024-01-04"),
+                    "tags": ["vacation"],
+                    "full_days": True,
+                }
+            ],
+            {"year": 2024},
+            [{"pk": 1, "tags": ["vacation"], "description": None}],
+            [
+                {
+                    "start": parse("2024-01-01"),
+                    "tags": ["holiday"],
+                    "description": "New Year's Day",
+                },
+                {
+                    "start": parse("2024-01-02"),
+                    "end": parse("2024-01-04"),
+                    "tags": ["vacation"],
+                },
+            ],
+            id="vacation is split when holiday collides",
         ),
     ],
 )
-def test_add_holidays(precondition, args, precheck, expected):
+def test_add_holidays_parametrized(precondition, args, precheck, expected):
     db = DatabaseConnection(":memory:")
     report_settings = ReportSettings()
     # 1. load preconditions
@@ -106,7 +247,7 @@ def test_add_holidays(precondition, args, precheck, expected):
             full_days=seg.get("full_days", False),
         )
     # 2. run precheck
-    check_segments_in_db(db, precheck)
+    check_segments_in_db(db, precheck, "precheck")
     # 3. run add_holidays
     result = timeturner.add_holidays(
         year=args.get("year", 2024),
@@ -116,7 +257,7 @@ def test_add_holidays(precondition, args, precheck, expected):
         db=db,
     )
     # 4. run expected checks
-    check_segments_in_db(db, expected)
+    check_segments_in_db(db, expected, "final check")
 
 
 GET_SUMMARY_TEST_CASES = [

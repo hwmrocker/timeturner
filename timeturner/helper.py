@@ -114,7 +114,7 @@ def now_with_tz(tz=local_tz):
 def parse(date_string) -> datetime:
     """Parse a date string and adding the local timezone."""
     dt = datetime.fromisoformat(date_string)
-    return dt.replace(tzinfo=local_tz)
+    return dt.astimezone()
 
 
 def get_tz_offset(dt: datetime) -> int:
