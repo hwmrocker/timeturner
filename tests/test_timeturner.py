@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time
 
 import pytest
 
@@ -7,6 +7,119 @@ from timeturner import models, timeturner
 from timeturner.models import DayType, NewSegmentParams, PensiveRow
 from timeturner.settings import ReportSettings
 
+
+def segment_matches(segment: PensiveRow, expected: dict) -> bool:
+    """
+    Check if a segment matches the expected dict (partial match).
+    """
+    for key, value in expected.items():
+        if not hasattr(segment, key):
+            return False
+        seg_val = getattr(segment, key)
+        # For datetime/date, allow string or datetime comparison
+        if isinstance(seg_val, (datetime, date)) and isinstance(value, str):
+            try:
+                if isinstance(seg_val, datetime):
+                    seg_val_str = seg_val.strftime("%Y-%m-%d")
+                else:
+                    seg_val_str = str(seg_val)
+                if not seg_val_str.startswith(value):
+                    return False
+            except Exception:
+                return False
+        elif seg_val != value:
+            return False
+    return True
+
+
+def check_segments_in_db(db, expected_segments: list[dict]):
+    """
+    For each expected segment dict, check that at least one segment in the DB matches.
+    """
+    all_segments = db.get_all_segments()
+    for expected in expected_segments:
+        matched = any(segment_matches(seg, expected) for seg in all_segments)
+        assert matched, f"Expected segment not found in DB: {expected}"
+
+
+@pytest.mark.parametrize(
+    "precondition,args,precheck,expected",
+    [
+        pytest.param(
+            # No pre-existing segments
+            [],
+            {"year": 2024, "country": "DE", "subdivision": "BY"},
+            [],
+            [
+                # Expect at least one known Bavarian holiday
+                {"description": "Neujahr", "tags": ["holiday"]},
+                {"description": "Tag der Deutschen Einheit", "tags": ["holiday"]},
+            ],
+            id="import_bavarian_holidays",
+        ),
+        pytest.param(
+            # No pre-existing segments, nationwide only
+            [],
+            {"year": 2024, "country": "DE", "subdivision": None},
+            [],
+            [
+                {"description": "Neujahr", "tags": ["holiday"]},
+                # Should not include "Mariä Himmelfahrt" (BY only)
+            ],
+            id="import_germany_nationwide",
+        ),
+        pytest.param(
+            # Pre-existing segment for Neujahr, should not duplicate
+            [
+                {
+                    "start": datetime(2024, 1, 1),
+                    "end": datetime(2024, 1, 2),
+                    "tags": ["holiday"],
+                    "description": "Neujahr",
+                    "full_days": True,
+                }
+            ],
+            {"year": 2024, "country": "DE", "subdivision": "BY"},
+            [
+                {"description": "Neujahr", "tags": ["holiday"]},
+            ],
+            [
+                {"description": "Neujahr", "tags": ["holiday"]},
+                {"description": "Tag der Deutschen Einheit", "tags": ["holiday"]},
+            ],
+            id="existing_holiday_segment",
+        ),
+    ],
+)
+def test_add_holidays_parametrized(precondition, args, precheck, expected):
+    db = DatabaseConnection(":memory:")
+    report_settings = ReportSettings()
+    # 1. load preconditions
+    for seg in precondition:
+        db.add_segment(
+            seg.get("start"),
+            seg.get("end"),
+            tags=seg.get("tags", []),
+            description=seg.get("description"),
+            full_days=seg.get("full_days", False),
+        )
+    # 2. run precheck
+    check_segments_in_db(db, precheck)
+    # 3. run add_holidays
+    result = timeturner.add_holidays(
+        year=args.get("year", 2024),
+        country=args.get("country", "DE"),
+        subdivision=args.get("subdivision"),
+        report_settings=report_settings,
+        db=db,
+    )
+    # 4. run expected checks
+    check_segments_in_db(db, expected)
+
+
+import holidays
+
+from timeturner.db import DatabaseConnection
 
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
