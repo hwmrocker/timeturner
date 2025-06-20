@@ -8,7 +8,7 @@ from typing import Iterator, Union, overload
 def start_of(dt: datetime | date, unit: str) -> datetime:
     if isinstance(dt, date) and not isinstance(dt, datetime):
         # Convert date to datetime at the start of the day
-        dt = datetime.combine(dt, datetime.min.time())
+        dt = datetime.combine(dt, datetime.min.time()).astimezone()
 
     additional_delta = timedelta()
     if unit == "week":
@@ -62,9 +62,6 @@ def dt_subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
         if new_month < 1:
             new_month = 12 + new_month
             year_delta += 1
-        elif new_month > 12:
-            new_month = new_month - 12
-            year_delta -= 1
 
         new_year = new_year - year_delta
 
@@ -103,7 +100,7 @@ def end_of_day(dt: datetime | date) -> datetime:
     """Return the first possible moment of the next day."""
     if isinstance(dt, date) and not isinstance(dt, datetime):
         # Convert date to datetime at the start of the day
-        dt = datetime.combine(dt, datetime.min.time())
+        dt = datetime.combine(dt, datetime.min.time()).astimezone()
     return dt_add(start_of(dt, "day"), days=1)
 
 
