@@ -7,6 +7,7 @@ from timeturner import models, timeturner
 from timeturner.models import DayType, NewSegmentParams, PensiveRow
 from timeturner.settings import ReportSettings
 
+
 GET_SUMMARY_TEST_CASES = [
     pytest.param(
         [],

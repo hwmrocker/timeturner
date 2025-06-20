@@ -43,7 +43,6 @@ def dt_add(dt: date, weeks=0, **kwargs) -> date: ...
 def dt_add(dt: Union[datetime, date], weeks=0, **kwargs) -> Union[datetime, date]:
     if weeks:
         kwargs["days"] = kwargs.get("days", 0) + weeks * 7
-    print(f"dt: {dt!r}, kwargs: {kwargs!r}")
     return dt + timedelta(**{k: v for k, v in kwargs.items()})
 
 
@@ -73,11 +72,9 @@ def dt_subtract(dt: datetime, months=0, years=0, **kwargs) -> datetime:
 
 
 def iter_over_days(start: datetime, end: datetime) -> Iterator[date]:
-    print(f"start: {start!r}, end: {end!r}")
     end = dt_subtract(end, microseconds=1)
     if end < start:
         return
-    print(f"start: {start!r}, end: {end!r}")
 
     next_day = start_of(start, "day")
     last_day = start_of(end, "day")
@@ -114,7 +111,6 @@ local_tz = datetime.now(timezone.utc).astimezone().tzinfo
 
 
 def now_with_tz(tz=local_tz):
-    print(f"tz: {tz}")
     return datetime.now(tz)
 
 

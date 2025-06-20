@@ -538,7 +538,6 @@ class DatabaseConnection:
             PensiveRow | None: The holiday segment row, or None if not found.
         """
         cursor = self.connection.cursor()
-        print(str(start_of(date, "day")), str(end_of_day(date)))
         cursor.execute(
             f"""
             SELECT pk, start, end, passive, full_days, description FROM {self.table_name}
