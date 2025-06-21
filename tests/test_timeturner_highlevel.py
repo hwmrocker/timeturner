@@ -490,65 +490,91 @@ def test_list_segments(db: DatabaseConnection, query, expected_days):
     assert [summary.day for summary in summaries] == expected_days
 
 
-def tt_test_case_summary(
-    input_args: list[list[str]],
-    expected: list[dict[str, timedelta]],
+def make_partials(input_args):
+    """
+    Helper to prepare a list of partial functions for timeturner operations.
+    Each element can be a tuple (func_name, args) or just args (uses 'add').
+    """
+    prepared_partials = []
+    for maybe_args in input_args:
+        if isinstance(maybe_args, tuple):
+            func_name, args = maybe_args
+        else:
+            func_name = "add"
+            args = maybe_args
+        func = getattr(timeturner, func_name)
+        prepared_partials.append(partial(func, args))
+    return prepared_partials
+
+
+def tt_list_segments_case(
+    input_args: list[list[str] | tuple[str, list[str]]],
+    list_args: list[str] | None,
+    test_conditions: list,
     id: str,
 ):
-    prepared_partials = []
-    for args in input_args:
-        func = getattr(timeturner, "add")
-        prepared_partials.append(partial(func, args))
+    """
+    Helper to create a pytest parameterized test case for timeturner.list_ high-level logic.
+
+    Args:
+        input_args: List of argument lists or tuples for segment creation.
+        list_args: Arguments for timeturner.list_.
+        test_conditions: List of callables that take the summaries and return True if the test passes.
+        id: The pytest case id.
+    """
     return pytest.param(
-        prepared_partials,
-        expected,
+        make_partials(input_args),
+        list_args,
+        test_conditions,
         id=id,
     )
 
 
 LIST_SEGMENTS_SUMMARY_TESTS = [
-    tt_test_case_summary(
+    tt_list_segments_case(
         [
             ["7:30", "-", "+5h"],
             ["@sick"],
         ],
-        [dict(over_time=timedelta(hours=0))],
-        "you will not get negative overtime when you get sick during work",
-    )
+        ["1d"],
+        [
+            lambda summaries: len(summaries) == 1,
+            lambda summaries: summaries[0].summary.over_time == timedelta(hours=0),
+        ],
+        "no negative overtime when sick during work",
+    ),
+    tt_list_segments_case(
+        [
+            ["9:00", "-", "+3h"],
+            ["13:00", "-", "+2h"],
+        ],
+        ["1d"],
+        [
+            lambda summaries: len(summaries) == 1,
+            lambda summaries: sum(len(day.segments) for day in summaries) == 2,
+            lambda summaries: summaries[0].summary.work_time.total_seconds()
+            == 5 * 3600,
+        ],
+        "two work segments, correct total work time",
+    ),
 ]
 
 
 @pytest.mark.parametrize(
-    "partial_functions, expected_summaries", LIST_SEGMENTS_SUMMARY_TESTS
+    "partial_functions, list_args, test_conditions", LIST_SEGMENTS_SUMMARY_TESTS
 )
 @freeze_time_at(day=23)
-def test_list_segments_summary(
-    db, partial_functions, expected_summaries: list[dict[str, timedelta]]
-):
+def test_list_segments_summary(db, partial_functions, list_args, test_conditions):
     report_settings = ReportSettings()
-    from pprint import pprint
 
     for func in partial_functions:
         func(db=db, report_settings=default_report_settings)
 
     summaries = timeturner.list_(
-        ["1d"],
+        list_args,
         report_settings=report_settings,
         db=db,
     )
 
-    observed_summaries = []
-    for expected_summary, observed_full_summary in zip(
-        expected_summaries, [s.summary for s in summaries]
-    ):
-        observed_summary = dict()
-        for key in expected_summary.keys():
-            observed_summary[key] = getattr(observed_full_summary, key)
-
-        observed_summaries.append(observed_summary)
-
-    print("observed_summaries:")
-    pprint(observed_summaries)
-    print("expected_summaries:")
-    pprint(expected_summaries)
-    assert expected_summaries == observed_summaries
+    for cond in test_conditions:
+        assert cond(summaries), f"Test condition failed: {cond.__doc__ or cond}"
