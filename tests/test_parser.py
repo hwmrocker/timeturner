@@ -337,7 +337,7 @@ PARSE_LIST_ARGS_EXAMPLES = [
         ["1y"],  # checking current year
         dict(),
         (parse("1985-01-01"), parse("1986-01-01")),
-        id="1y dbgnow",
+        id="1y",
     ),
     pytest.param(
         ["2years"],  # checking last and current year

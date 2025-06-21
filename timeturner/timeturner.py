@@ -554,9 +554,16 @@ def _add(
                 new_segment_params.end = conflicting_segment.start
         elif conflicting_segment.end is None:
             # current segment starts after an open ended segment
-            # we don't need to check the prio, because the conflicting segment
-            # needs to be closed any way.
-            db.update_segment(conflicting_segment.pk, end=start)
+            # close the open ended segment, only if the newly closed segment is not longer than 12h
+
+            final_timedelta = start - conflicting_segment.start
+            if final_timedelta > timedelta(hours=12):
+                # TODO: warning that the segment is too long
+                print(
+                    f"Segment {conflicting_segment.pk} is too long, closing it at {start}"
+                )
+            else:
+                db.update_segment(conflicting_segment.pk, end=start)
         elif (
             end and start > conflicting_segment.start and end < conflicting_segment.end
         ):

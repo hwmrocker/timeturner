@@ -25,6 +25,33 @@ def tt_test_case(
     expected: list[tuple[datetime, datetime | None, list[str]]],
     id: str,
 ):
+    """
+    Helper to create a pytest parameterized test case for timeturner high-level segment logic.
+
+    Args:
+        input_args: A list of argument lists or tuples. If a tuple, the first element is the function name (e.g., "add" or "end"),
+                    and the second is the argument list. If a list, "add" is assumed as the function.
+        expected: A list of tuples (start, end, tags) representing the expected segments after all operations.
+        id: The pytest case id.
+
+    Returns:
+        A pytest.param object for use in parameterized tests, where each input is a partial function ready to be called.
+
+    Examples:
+        # Example 1: Add a segment with no arguments (defaults to now)
+        tt_test_case(
+            [[]],
+            [(parse("1985-05-25 15:34:00"), None, [])],
+            id="no time args"
+        )
+
+        # Example 2: Add a segment and then end it
+        tt_test_case(
+            [["9:00"], ("end", ["12:00"])],
+            [(parse("1985-05-25 09:00:00"), parse("1985-05-25 12:00:00"), [])],
+            id="add and end segment"
+        )
+    """
     prepared_partials = []
     for maybe_args in input_args:
         if isinstance(maybe_args, tuple):
@@ -373,6 +400,14 @@ ADD_TEST_CASES = [
             (parse("1985-05-25 00:00:00"), parse("1985-05-26 00:00:00"), ["sick"]),
         ],
         id="full day tag can coexist with other segments",
+    ),
+    tt_test_case(
+        [["1985-05-24", "8:00"], ["8:00"]],
+        [
+            (parse("1985-05-24 08:00:00"), None, []),
+            (parse("1985-05-25 08:00:00"), None, []),
+        ],
+        id="dont close too old segment dbgnow",
     ),
     # tt_test_case(
     #     [["9:00", "-", "+3h", "@prio1"], ["11:00"]],
