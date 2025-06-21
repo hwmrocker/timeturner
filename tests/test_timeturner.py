@@ -1,6 +1,5 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time
 
-import holidays
 import pytest
 
 from tests.helpers import parse
@@ -249,7 +248,7 @@ def test_add_holidays_parametrized(precondition, args, precheck, expected):
     # 2. run precheck
     check_segments_in_db(db, precheck, "precheck")
     # 3. run add_holidays
-    result = timeturner.add_holidays(
+    _ = timeturner.add_holidays(
         year=args.get("year", 2024),
         country=args.get("country", "DE"),
         subdivision=args.get("subdivision"),

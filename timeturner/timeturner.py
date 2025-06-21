@@ -65,12 +65,12 @@ def add_holidays(
         )
 
     added_segments = []
-    for date, name in holiday_obj.items():
+    for holidate, name in holiday_obj.items():
         # If no subdivision, only add holidays that are valid nationwide
 
-        start = start_of(date, "day").astimezone()
-        existing_holiday = db.get_full_day_segment_by_date(date)
-        print(f"Checking holiday {name} on {date} ({start}) {existing_holiday=}")
+        start = start_of(holidate, "day").astimezone()
+        existing_holiday = db.get_full_day_segment_by_date(holidate)
+        print(f"Checking holiday {name} on {holidate} ({start}) {existing_holiday=}")
         if existing_holiday and report_settings.holiday_tag in existing_holiday.tags:
             if existing_holiday.description == name:
                 # Holiday already exists, skip adding it again
@@ -85,7 +85,7 @@ def add_holidays(
         added = _add(
             NewSegmentParams(
                 start=start,
-                end=end_of_day(date),  # No end time for holidays
+                end=end_of_day(holidate),  # No end time for holidays
                 tags=[report_settings.holiday_tag],
                 description=name,
                 full_days=True,  # Full day holiday
